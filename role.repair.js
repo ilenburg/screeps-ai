@@ -8,9 +8,11 @@ module.exports = function() {
     }
 
     if (this.memory.refill) {
-        const resource = this.pos.findClosestFilledSpawnOrExtension();
-        if (this.withdraw(resource, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-            this.moveTo(resource);
+        if (Memory.shouldRefill) {
+            const resource = this.pos.findClosestFilledSpawnOrExtension();
+            if (this.withdraw(resource, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                this.moveTo(resource);
+            }
         }
     } else {
         const targets = this.room.find(FIND_STRUCTURES, {
