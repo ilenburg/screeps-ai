@@ -1,17 +1,23 @@
 module.exports = function() {
 
-    RoomPosition.prototype.findClosestSpawn = function() {
-        return this.findClosestByRange(FIND_MY_SPAWNS);
+    RoomPosition.prototype.findContainerNearby = function() {
+        const containers = this.findInRange(FIND_STRUCTURES, 1, {
+            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+        });
+        if (containers.length > 0) {
+            return containers[0];
+        }
+        return null;
     }
 
     RoomPosition.prototype.findClosestSpawnOrExtension = function() {
-        const spawn = this.findClosestByRange(FIND_MY_SPAWNS, {
-            filter: (structure) => structure.energy < structure.energyCapacity
-        });
-
-        return spawn ? spawn : this.findClosestByRange(FIND_STRUCTURES, {
+        const extension = this.findClosestByRange(FIND_STRUCTURES, {
             filter: (structure) => structure.structureType === STRUCTURE_EXTENSION &&
                 structure.energy < structure.energyCapacity
+        });
+
+        return extension ? extension : this.findClosestByRange(FIND_MY_SPAWNS, {
+            filter: (structure) => structure.energy < structure.energyCapacity
         });
     }
 

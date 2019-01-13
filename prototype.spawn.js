@@ -85,8 +85,9 @@ module.exports = function() {
         const sources = this.room.find(FIND_SOURCES);
         for (var i = 0; i < sources.length; i++) {
             const sourceCreeps = _(roomCreeps).filter(sourceFilter(sources[i].id)).value();
-            if (sources[i].getHarvestSlots() > sourceCreeps.length &&
-                sourceCreeps.reduce(reduceWorkBody, 0) < 5) {
+            if ((sources[i].getHarvestSlots() > sourceCreeps.length &&
+                    sourceCreeps.reduce(reduceWorkBody, 0) < 5) ||
+                (sourceCreeps.length === 1 && sourceCreeps[0].ticksToLive < 200)) {
                 return sources[i];
             }
         }
@@ -122,7 +123,7 @@ module.exports = function() {
 
     StructureSpawn.prototype.spawnBuilder = function() {
         const creepBody = [WORK, CARRY, MOVE];
-        fillWithPart.call(this, creepBody, WORK);
+        balacedFillWithParts.call(this, creepBody);
         return this.spawnCreep(creepBody, 'Builder' + Game.time, new RoleMemory('builder', null));
     }
 
@@ -148,7 +149,6 @@ module.exports = function() {
     }
 
     StructureSpawn.prototype.produce = function() {
-
         const roomCreeps = this.room.find(FIND_MY_CREEPS);
         const source = findSource.call(this, roomCreeps);
         const amount = {
@@ -157,10 +157,11 @@ module.exports = function() {
             upgrader: _(roomCreeps).filter(creepFilter('upgrader')).size(),
             harvester: _(roomCreeps).filter(creepFilter('harvester')).size(),
             builder: _(roomCreeps).filter(creepFilter('builder')).size(),
-            repair: _(roomCreeps).filter(creepFilter('repair')).size()
+            repairer: _(roomCreeps).filter(creepFilter('repair')).size()
         };
 
-        if (this.room.energyAvailable < this.room.energyCapacityAvailable && (source || amount.miner / amount.carrier > configuration.minerToCarrierRatio)) {
+        if (this.room.energyAvailable < this.room.energyCapacityAvailable &&
+            (source || amount.miner / amount.carrier > configuration.minerToCarrierRatio)) {
             Memory.shouldRefill = false;
         } else {
             Memory.shouldRefill = true;
@@ -177,9 +178,9 @@ module.exports = function() {
                 this.spawnCarrier();
             } else if (source) {
                 this.spawnMiner(source);
-            } else if (amount.miner / amount.builder > configuration.minerToBuilderRatio && this.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
+            } else if (amount.builder < configuration.numberBuilder && this.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
                 this.spawnBuilder();
-            } else if (amount.repair < configuration.numberRepair && this.room.find(FIND_STRUCTURES, {
+            } else if (amount.repairer < configuration.numberRepair && this.room.find(FIND_STRUCTURES, {
                     filter: object => object.hits < object.hitsMax
                 }).length > 0) {
                 this.spawnRepair();
