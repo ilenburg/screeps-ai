@@ -13,14 +13,14 @@ module.exports = function() {
             this.moveTo(resource);
         }
     } else {
-        const targets = creep.room.find(FIND_STRUCTURES, {
+        const targets = this.room.find(FIND_STRUCTURES, {
             filter: object => object.hits < object.hitsMax
         });
 
         if (targets.length > 0) {
             targets.sort((a, b) => a.hits - b.hits);
-            if (creep.repair(targets[0]) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(targets[0]);
+            if (this.repair(targets[0]) == ERR_NOT_IN_RANGE) {
+                this.moveTo(targets[0]);
             }
         }
     }
