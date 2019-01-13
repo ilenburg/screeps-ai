@@ -42,7 +42,6 @@ module.exports = function() {
                     this.moveTo(target);
                 }
             } else {
-                console.log(target);
                 if (this.withdraw(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     this.moveTo(target);
                 }
