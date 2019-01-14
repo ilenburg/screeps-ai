@@ -2,6 +2,14 @@ const configuration = require('configuration');
 
 module.exports = function() {
 
+    const filterDamaged = {
+        filter: (object) => object.hits < object.hitsMax
+    };
+
+    const filterIdle = {
+        filter: creepFilter('idle')
+    };
+
     function RoleMemory(role, targetId) {
         this.memory = {
             role: role,
@@ -27,8 +35,7 @@ module.exports = function() {
         return cost;
     }
 
-    function fillWithPart(body, bodyPart) {
-        const energyAvailable = this.room.energyAvailable;
+    function fillWithPart(body, bodyPart, energyAvailable) {
         let cost = calculateCost(body);
         while (cost < energyAvailable) {
             if (cost + BODYPART_COST[bodyPart] <= energyAvailable) {
@@ -40,8 +47,7 @@ module.exports = function() {
         }
     }
 
-    function fillMiner(body) {
-        const energyAvailable = this.room.energyAvailable;
+    function fillMiner(body, energyAvailable) {
         let cost = calculateCost(body);
         while (cost < energyAvailable) {
             if (cost + BODYPART_COST[WORK] <= energyAvailable && body.reduce(reduceWorkBodyPart, 0) < 5) {
@@ -53,8 +59,33 @@ module.exports = function() {
         }
     }
 
-    function balacedFillWithParts(body) {
-        const energyAvailable = this.room.energyAvailable;
+    function fillCarrier(body, energyAvailable) {
+        let cost = calculateCost(body);
+        while (cost < energyAvailable) {
+            if (cost + BODYPART_COST[CARRY] <= energyAvailable) {
+                body.push(CARRY);
+                cost += BODYPART_COST[CARRY];
+            } else {
+                break;
+            }
+
+            if (cost + BODYPART_COST[CARRY] <= energyAvailable) {
+                body.push(CARRY);
+                cost += BODYPART_COST[CARRY];
+            } else {
+                break;
+            }
+
+            if (cost + BODYPART_COST[MOVE] <= energyAvailable) {
+                body.push(MOVE);
+                cost += BODYPART_COST[MOVE];
+            } else {
+                break;
+            }
+        }
+    }
+
+    function balacedFillWithParts(body, energyAvailable) {
         let cost = calculateCost(body);
         const bodyParts = [WORK, MOVE, CARRY];
         while (cost < energyAvailable) {
@@ -73,7 +104,7 @@ module.exports = function() {
     }
 
     function reduceWorkBodyPart(accumulator, bodyPart) {
-        return (accumulator + ((bodyPart.type === WORK) ? 1 : 0));
+        return (accumulator + ((bodyPart === WORK || bodyPart.type === WORK) ? 1 : 0));
     }
 
     function reduceWorkBody(workPartAcumulator, creep) {
@@ -81,8 +112,7 @@ module.exports = function() {
         return workPartAcumulator + workPartCount;
     }
 
-    function findSource(roomCreeps) {
-        const sources = this.room.find(FIND_SOURCES);
+    function filterAvailableSource(roomCreeps, sources) {
         for (var i = 0; i < sources.length; i++) {
             const sourceCreeps = _(roomCreeps).filter(sourceFilter(sources[i].id)).value();
             if ((sources[i].getHarvestSlots() > sourceCreeps.length &&
@@ -94,13 +124,10 @@ module.exports = function() {
         return null;
     }
 
-    const minerFilter = new RoleMemory('miner', null);
-    const carrierFilter = new RoleMemory('carrier', null);
-
     StructureSpawn.prototype.spawnMiner = function(source) {
         if (source) {
             const creepBody = [WORK, WORK, MOVE];
-            fillMiner.call(this, creepBody);
+            fillMiner(creepBody, this.room.energyAvailable);
             return this.spawnCreep(creepBody, 'Miner' + Game.time, new RoleMemory('miner', source.id));
         }
         return ERR_INVALID_TARGET;
@@ -109,48 +136,47 @@ module.exports = function() {
     StructureSpawn.prototype.spawnHarvester = function(source) {
         if (source) {
             const creepBody = [WORK, MOVE, CARRY];
-            balacedFillWithParts.call(this, creepBody);
+            balacedFillWithParts(creepBody, this.room.energyAvailable);
             return this.spawnCreep(creepBody, 'Harvester' + Game.time, new RoleMemory('harvester', source.id));
         }
         return ERR_INVALID_TARGET;
     }
 
     StructureSpawn.prototype.spawnUpgrader = function() {
-        const creepBody = [WORK, CARRY, MOVE];
-        balacedFillWithParts.call(this, creepBody);
+        const creepBody = [WORK, MOVE, CARRY];
+        balacedFillWithParts(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Upgrader' + Game.time, new RoleMemory('upgrader', null));
     }
 
     StructureSpawn.prototype.spawnBuilder = function() {
-        const creepBody = [WORK, CARRY, MOVE];
-        balacedFillWithParts.call(this, creepBody);
+        const creepBody = [WORK, MOVE, CARRY];
+        balacedFillWithParts(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Builder' + Game.time, new RoleMemory('builder', null));
     }
 
     StructureSpawn.prototype.spawnCarrier = function() {
         const creepBody = [CARRY, CARRY, MOVE];
-        fillWithPart.call(this, creepBody, CARRY);
+        fillCarrier(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Carrier' + Game.time, new RoleMemory('carrier', null));
     }
 
     StructureSpawn.prototype.spawnRepair = function() {
-        const creepBody = [WORK, CARRY, MOVE];
-        balacedFillWithParts.call(this, creepBody);
+        const creepBody = [WORK, MOVE, CARRY];
+        balacedFillWithParts(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Repairer' + Game.time, new RoleMemory('repair', null));
     }
 
     StructureSpawn.prototype.kill = function() {
-        const idleCreeps = this.pos.findInRange(FIND_MY_CREEPS, 1, {
-            filter: creepFilter('idle')
-        });
+        const idleCreeps = this.pos.findInRange(FIND_MY_CREEPS, 1, filterIdle);
         if (idleCreeps.length > 0) {
             this.recycleCreep(idleCreeps[0]);
         }
     }
 
     StructureSpawn.prototype.produce = function() {
-        const roomCreeps = this.room.find(FIND_MY_CREEPS);
-        const source = findSource.call(this, roomCreeps);
+        const room = this.room;
+        const roomCreeps = room.find(FIND_MY_CREEPS);
+        const source = filterAvailableSource(roomCreeps, room.find(FIND_SOURCES));
         const amount = {
             miner: _(roomCreeps).filter(creepFilter('miner')).size(),
             carrier: _(roomCreeps).filter(creepFilter('carrier')).size(),
@@ -160,14 +186,18 @@ module.exports = function() {
             repairer: _(roomCreeps).filter(creepFilter('repair')).size()
         };
 
-        if (this.room.energyAvailable < this.room.energyCapacityAvailable &&
+        if (room.energyAvailable < room.energyCapacityAvailable &&
             (source || amount.miner / amount.carrier > configuration.minerToCarrierRatio)) {
             Memory.shouldRefill = false;
         } else {
             Memory.shouldRefill = true;
         }
 
-        if (this.room.energyAvailable === this.room.energyCapacityAvailable) {
+        if (this.energy === this.energyCapacity && amount.miner < 1 && amount.harvester < 1) {
+            this.spawnHarvester(source);
+        }
+
+        if (room.energyAvailable === room.energyCapacityAvailable) {
             if (amount.miner < 1) {
                 if (amount.carrier < 1 && amount.harvester < 1) {
                     this.spawnHarvester(source);
@@ -178,11 +208,9 @@ module.exports = function() {
                 this.spawnCarrier();
             } else if (source) {
                 this.spawnMiner(source);
-            } else if (amount.builder < configuration.numberBuilder && this.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
+            } else if (amount.builder < configuration.numberBuilder && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
                 this.spawnBuilder();
-            } else if (amount.repairer < configuration.numberRepair && this.room.find(FIND_STRUCTURES, {
-                    filter: object => object.hits < object.hitsMax
-                }).length > 0) {
+            } else if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
                 this.spawnRepair();
             } else if (amount.upgrader < configuration.numberUpgrader) {
                 this.spawnUpgrader();

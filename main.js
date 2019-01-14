@@ -2,6 +2,7 @@ require('prototype.room.position')();
 require('prototype.spawn')();
 require('prototype.creep')();
 require('prototype.source')();
+require('prototype.room')();
 
 module.exports.loop = function() {
 

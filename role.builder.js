@@ -20,12 +20,7 @@ module.exports = function() {
     }
 
     if (this.memory.refill) {
-        if (Memory.shouldRefill) {
-            const resource = this.pos.findClosestFilledSpawnOrExtension();
-            if (this.withdraw(resource, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                this.moveTo(resource);
-            }
-        }
+        this.refill();
     } else {
         const constructionSites = this.room.find(FIND_CONSTRUCTION_SITES);
         if (constructionSites.length > 0) {

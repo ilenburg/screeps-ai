@@ -1,12 +1,6 @@
 module.exports = function() {
 
-    if (this.memory.refill && this.carry[RESOURCE_ENERGY] === this.carryCapacity) {
-        this.memory.refill = false;
-    }
-
-    if (!this.memory.refill && this.carry[RESOURCE_ENERGY] === 0) {
-        this.memory.refill = true;
-    }
+    this.checkRefillState();
 
     if (this.memory.refill) {
         const target = Game.getObjectById(this.memory.targetId);

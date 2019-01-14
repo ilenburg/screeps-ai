@@ -1,5 +1,27 @@
 module.exports = function() {
 
+    RoomPosition.prototype.findContainerInArea = function() {
+        const containers = this.findInRange(FIND_STRUCTURES, 6, {
+            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
+                structure.store[RESOURCE_ENERGY] < structure.storeCapacity / 2
+        });
+        if (containers.length > 0) {
+            return containers[0];
+        }
+        return null;
+    }
+    
+    RoomPosition.prototype.findFilledContainerInArea = function() {
+        const containers = this.findInRange(FIND_STRUCTURES, 6, {
+            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
+                structure.store[RESOURCE_ENERGY] > 0
+        });
+        if (containers.length > 0) {
+            return containers[0];
+        }
+        return null;
+    }
+
     RoomPosition.prototype.findContainerNearby = function() {
         const containers = this.findInRange(FIND_STRUCTURES, 1, {
             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER

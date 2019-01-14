@@ -1,7 +1,7 @@
 module.exports = {
     numberUpgrader: 3,
     numberRepair: 1,
-    numberBuilder: 4,
+    numberBuilder: 3,
     minerToBuilderRatio: 1,
-    minerToCarrierRatio: 0.25
+    minerToCarrierRatio: 0.5
 };
