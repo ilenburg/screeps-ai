@@ -10,7 +10,7 @@ module.exports = function() {
         }
         return null;
     }
-    
+
     RoomPosition.prototype.findFilledContainerInArea = function() {
         const containers = this.findInRange(FIND_STRUCTURES, 6, {
             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&

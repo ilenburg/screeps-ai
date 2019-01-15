@@ -12,15 +12,29 @@ module.exports = function() {
 
     Creep.prototype.collect = function(target) {
         if (target) {
+            this.memory.targetId = target.id;
+            let actionResult;
             if (target instanceof Resource) {
-                if (this.pickup(target) === ERR_NOT_IN_RANGE) {
-                    this.moveTo(target);
+                actionResult = this.pickup(target);
+                if (target.amount < 50) {
+                    this.memory.targetId = null;
                 }
             } else {
-                if (this.withdraw(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    this.moveTo(target);
+                actionResult = this.withdraw(target, RESOURCE_ENERGY);
+                if (target.store[RESOURCE_ENERGY] < 50) {
+                    this.memory.targetId = null;
                 }
             }
+
+            if (actionResult !== OK) {
+                if (actionResult === ERR_NOT_IN_RANGE) {
+                    this.moveTo(target);
+                } else {
+                    this.memory.targetId = null;
+                }
+            }
+        } else {
+            this.memory.targetId = null;
         }
     }
 

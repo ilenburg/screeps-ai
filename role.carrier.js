@@ -9,10 +9,21 @@ module.exports = function() {
     }
 
     if (this.memory.active) {
-        const target = this.room.findGatheringSource();
-        this.collect(target);
+        if (this.memory.targetId) {
+            const target = Game.getObjectById(this.memory.targetId);
+            this.collect(target);
+        } else {
+            const target = this.room.findGatheringSource();
+            this.collect(target);
+        }
     } else {
-        const spawn = this.pos.findClosestSpawnOrExtension();
+
+        let spawn = this.pos.findClosestSpawnOrExtension();
+
+        if (!spawn) {
+            spawn = this.pos.findClosestByRange(FIND_MY_SPAWNS);
+        }
+
         if (spawn) {
             const container = spawn.pos.findContainerInArea();
             if (container && Memory.shouldRefill) {

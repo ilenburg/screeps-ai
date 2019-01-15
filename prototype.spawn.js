@@ -208,10 +208,10 @@ module.exports = function() {
                 this.spawnCarrier();
             } else if (source) {
                 this.spawnMiner(source);
-            } else if (amount.builder < configuration.numberBuilder && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
-                this.spawnBuilder();
             } else if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
                 this.spawnRepair();
+            } else if (amount.builder < configuration.numberBuilder && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
+                this.spawnBuilder();
             } else if (amount.upgrader < configuration.numberUpgrader) {
                 this.spawnUpgrader();
             }
