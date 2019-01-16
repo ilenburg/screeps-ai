@@ -3,4 +3,4 @@ module.exports = function() {
     if (spawn) {
         this.moveTo(spawn);
     }
-}
+};

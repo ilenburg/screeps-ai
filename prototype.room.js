@@ -47,15 +47,25 @@ module.exports = function() {
         return null;
     }
 
+    Room.prototype.defend = function() {
+        const towers = this.find(FIND_MY_STRUCTURES, {
+            filter: {
+                structureType: STRUCTURE_TOWER
+            }
+        });
+
+        towers.forEach(tower => tower.defend());
+    };
+
     Room.prototype.findGatheringSource = function() {
         const energyStorage = getFilledContainer(this.find(FIND_STRUCTURES, filterContainer(this.find(FIND_MY_SPAWNS)[0])));
         const resource = getGreaterPile(this.find(FIND_DROPPED_RESOURCES));
         return selectTarget(energyStorage, resource);
-    }
+    };
 
     Room.prototype.findSortedRepairableStructures = function() {
         return (this.find(FIND_STRUCTURES, {
             filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL
         }).sort((structureA, structureB) => (structureA.hits / structureA.hitsMax) - (structureB.hits / structureB.hitsMax)));
-    }
-}
+    };
+};

@@ -7,7 +7,15 @@ module.exports = function() {
         idle: require('role.idle'),
         harvester: require('role.harvester'),
         builder: require('role.builder'),
-        repair: require('role.repair')
+        repair: require('role.repair'),
+        samurai: require('role.samurai'),
+        lord: require('role.lord')
+    };
+
+    Creep.prototype.seekAndAttack = function(target) {
+        if (this.attack(target) == ERR_NOT_IN_RANGE) {
+            return this.moveTo(target);
+        }
     };
 
     Creep.prototype.collect = function(target) {
@@ -36,7 +44,7 @@ module.exports = function() {
         } else {
             this.memory.targetId = null;
         }
-    }
+    };
 
     Creep.prototype.checkRefillState = function() {
         if (this.memory.refill && this.carry[RESOURCE_ENERGY] === this.carryCapacity) {
@@ -46,7 +54,7 @@ module.exports = function() {
         if (!this.memory.refill && this.carry[RESOURCE_ENERGY] === 0) {
             this.memory.refill = true;
         }
-    }
+    };
 
     Creep.prototype.refill = function() {
         const resource = this.pos.findClosestByRange(FIND_MY_SPAWNS);
@@ -64,9 +72,9 @@ module.exports = function() {
                 }
             }
         }
-    }
+    };
 
     Creep.prototype.executeRole = function() {
         roles[this.memory.role].call(this);
-    }
-}
+    };
+};

@@ -17,23 +17,31 @@ module.exports = function() {
             this.collect(target);
         }
     } else {
+        const tower = this.pos.findClosestTower();
+        if (tower && Memory.shouldRefill) {
+            if (this.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                this.moveTo(tower);
+            }
+        } else {
+            let spawn = this.pos.findClosestSpawnOrExtension();
 
-        let spawn = this.pos.findClosestSpawnOrExtension();
+            if (!spawn) {
+                spawn = this.pos.findClosestByRange(FIND_MY_SPAWNS);
+            }
 
-        if (!spawn) {
-            spawn = this.pos.findClosestByRange(FIND_MY_SPAWNS);
-        }
-
-        if (spawn) {
-            const container = spawn.pos.findContainerInArea();
-            if (container && Memory.shouldRefill) {
-                if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    this.moveTo(container);
+            if (spawn) {
+                const container = spawn.pos.findContainerInArea();
+                if (container && Memory.shouldRefill) {
+                    if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        this.moveTo(container);
+                    }
+                } else {
+                    if (this.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        this.moveTo(spawn);
+                    }
                 }
             } else {
-                if (this.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    this.moveTo(spawn);
-                }
+                this.moveTo(Game.spawns['Spawn1']);
             }
         }
     }

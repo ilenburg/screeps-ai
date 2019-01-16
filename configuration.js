@@ -1,7 +1,10 @@
 module.exports = {
-    numberUpgrader: 4,
+    numberUpgrader: 1,
     numberRepair: 1,
-    numberBuilder: 1,
+    numberBuilder: 2,
+    numberSamurai: 1,
+    numberLord: 1,
     minerToBuilderRatio: 1,
-    minerToCarrierRatio: 0.5
+    minerToCarrierRatio: 0.1,
+    attackFlagName: 'Enemy'
 };

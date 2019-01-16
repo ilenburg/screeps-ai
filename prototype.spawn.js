@@ -17,6 +17,13 @@ module.exports = function() {
         };
     }
 
+    function AttackerRoleMemory(role, targetFlagName) {
+        this.memory = {
+            role: role,
+            targetFlagName: targetFlagName
+        };
+    }
+
     function creepFilter(role) {
         return function(creep) {
             return creep.memory.role === role;
@@ -53,6 +60,44 @@ module.exports = function() {
             if (cost + BODYPART_COST[WORK] <= energyAvailable && body.reduce(reduceWorkBodyPart, 0) < 5) {
                 body.push(WORK);
                 cost += BODYPART_COST[WORK];
+            } else {
+                break;
+            }
+        }
+    }
+
+    function fillSamurai(body, energyAvailable) {
+        let cost = calculateCost(body);
+        while (cost < energyAvailable) {
+            if (cost + BODYPART_COST[ATTACK] <= energyAvailable) {
+                body.push(ATTACK);
+                cost += BODYPART_COST[ATTACK];
+            } else {
+                break;
+            }
+
+            if (cost + BODYPART_COST[MOVE] <= energyAvailable) {
+                body.push(MOVE);
+                cost += BODYPART_COST[MOVE];
+            } else {
+                break;
+            }
+        }
+    }
+
+    function fillLord(body, energyAvailable) {
+        let cost = calculateCost(body);
+        while (cost < energyAvailable) {
+            if (cost + BODYPART_COST[CLAIM] <= energyAvailable) {
+                body.push(CLAIM);
+                cost += BODYPART_COST[CLAIM];
+            } else {
+                break;
+            }
+
+            if (cost + BODYPART_COST[MOVE] <= energyAvailable) {
+                body.push(MOVE);
+                cost += BODYPART_COST[MOVE];
             } else {
                 break;
             }
@@ -103,13 +148,16 @@ module.exports = function() {
         }
     }
 
+    function reduceCreep(accumulator, creep) {
+        return accumulator + creep.body.length;
+    }
+
     function reduceWorkBodyPart(accumulator, bodyPart) {
         return (accumulator + ((bodyPart === WORK || bodyPart.type === WORK) ? 1 : 0));
     }
 
     function reduceWorkBody(workPartAcumulator, creep) {
-        const workPartCount = creep.body.reduce(reduceWorkBodyPart, 0);
-        return workPartAcumulator + workPartCount;
+        return workPartAcumulator + creep.getActiveBodyparts(WORK);
     }
 
     function filterAvailableSource(roomCreeps, sources) {
@@ -131,7 +179,7 @@ module.exports = function() {
             return this.spawnCreep(creepBody, 'Miner' + Game.time, new RoleMemory('miner', source.id));
         }
         return ERR_INVALID_TARGET;
-    }
+    };
 
     StructureSpawn.prototype.spawnHarvester = function(source) {
         if (source) {
@@ -140,54 +188,80 @@ module.exports = function() {
             return this.spawnCreep(creepBody, 'Harvester' + Game.time, new RoleMemory('harvester', source.id));
         }
         return ERR_INVALID_TARGET;
-    }
+    };
 
     StructureSpawn.prototype.spawnUpgrader = function() {
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Upgrader' + Game.time, new RoleMemory('upgrader', null));
-    }
+    };
 
     StructureSpawn.prototype.spawnBuilder = function() {
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Builder' + Game.time, new RoleMemory('builder', null));
-    }
+    };
 
     StructureSpawn.prototype.spawnCarrier = function() {
         const creepBody = [CARRY, CARRY, MOVE];
         fillCarrier(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Carrier' + Game.time, new RoleMemory('carrier', null));
-    }
+    };
 
     StructureSpawn.prototype.spawnRepair = function() {
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Repairer' + Game.time, new RoleMemory('repair', null));
-    }
+    };
+
+    StructureSpawn.prototype.spawnSamurai = function(attackFlag) {
+        if (attackFlag) {
+            const creepBody = [ATTACK, MOVE, ATTACK, MOVE];
+            fillSamurai(creepBody, this.room.energyAvailable);
+            return this.spawnCreep(creepBody, 'Samurai' + Game.time, new SamuraiRoleMemory('samurai', attackFlag.name));
+        }
+        return ERR_INVALID_TARGET;
+    };
+
+    StructureSpawn.prototype.spawnLord = function(attackFlag) {
+        if (attackFlag) {
+            const creepBody = [CLAIM, MOVE];
+            fillLord(creepBody, this.room.energyAvailable);
+            return this.spawnCreep(creepBody, 'Lord' + Game.time, new AttackerRoleMemory('lord', attackFlag.name));
+        }
+        return ERR_INVALID_TARGET;
+    };
 
     StructureSpawn.prototype.kill = function() {
         const idleCreeps = this.pos.findInRange(FIND_MY_CREEPS, 1, filterIdle);
         if (idleCreeps.length > 0) {
             this.recycleCreep(idleCreeps[0]);
         }
-    }
+    };
 
     StructureSpawn.prototype.produce = function() {
         const room = this.room;
         const roomCreeps = room.find(FIND_MY_CREEPS);
         const source = filterAvailableSource(roomCreeps, room.find(FIND_SOURCES));
+        const attackFlag = Game.flags[configuration.attackFlagName];
         const amount = {
             miner: _(roomCreeps).filter(creepFilter('miner')).size(),
             carrier: _(roomCreeps).filter(creepFilter('carrier')).size(),
             upgrader: _(roomCreeps).filter(creepFilter('upgrader')).size(),
             harvester: _(roomCreeps).filter(creepFilter('harvester')).size(),
             builder: _(roomCreeps).filter(creepFilter('builder')).size(),
-            repairer: _(roomCreeps).filter(creepFilter('repair')).size()
+            repairer: _(roomCreeps).filter(creepFilter('repair')).size(),
+            samurai: _(Game.creeps).filter(creepFilter('samurai')).size(),
+            lord: _(Game.creeps).filter(creepFilter('lord')).size()
+        };
+
+        const parts = {
+            miner: _(roomCreeps).filter(creepFilter('miner')).reduce(reduceCreep, 0),
+            carrier: _(roomCreeps).filter(creepFilter('carrier')).reduce(reduceCreep, 0)
         };
 
         if (room.energyAvailable < room.energyCapacityAvailable &&
-            (source || amount.miner / amount.carrier > configuration.minerToCarrierRatio)) {
+            (source || parts.miner / parts.carrier > configuration.minerToCarrierRatio)) {
             Memory.shouldRefill = false;
         } else {
             Memory.shouldRefill = true;
@@ -204,10 +278,14 @@ module.exports = function() {
                 } else {
                     this.spawnMiner(source);
                 }
-            } else if (amount.miner / amount.carrier > configuration.minerToCarrierRatio) {
+            } else if (parts.miner / parts.carrier > configuration.minerToCarrierRatio) {
                 this.spawnCarrier();
             } else if (source) {
                 this.spawnMiner(source);
+            } else if (false && attackFlag && amount.samurai < configuration.numberSamurai) {
+                this.spawnSamurai(attackFlag);
+            } else if (attackFlag && amount.lord < configuration.numberLord) {
+                this.spawnLord(attackFlag);
             } else if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
                 this.spawnRepair();
             } else if (amount.builder < configuration.numberBuilder && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
@@ -216,5 +294,5 @@ module.exports = function() {
                 this.spawnUpgrader();
             }
         }
-    }
+    };
 };

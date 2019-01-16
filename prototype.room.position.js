@@ -1,5 +1,24 @@
 module.exports = function() {
 
+    RoomPosition.prototype.findClosestOtherController = function() {
+        return this.findClosestByRange(FIND_STRUCTURES, {
+            filter: structure => structure.structureType === STRUCTURE_CONTROLLER &&
+                !structure.my
+        });
+    };
+
+    RoomPosition.prototype.findClosestHostileSpawn = function() {
+        return this.findClosestByRange(FIND_HOSTILE_STRUCTURES, {
+            filter: structure => structure.structureType === STRUCTURE_SPAWN
+        });
+    };
+
+    RoomPosition.prototype.findClosestWall = function() {
+        return this.findClosestByRange(FIND_STRUCTURES, {
+            filter: (structure) => structure.structureType === STRUCTURE_WALL
+        });
+    };
+
     RoomPosition.prototype.findContainerInArea = function() {
         const containers = this.findInRange(FIND_STRUCTURES, 6, {
             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
@@ -9,7 +28,7 @@ module.exports = function() {
             return containers[0];
         }
         return null;
-    }
+    };
 
     RoomPosition.prototype.findFilledContainerInArea = function() {
         const containers = this.findInRange(FIND_STRUCTURES, 6, {
@@ -20,7 +39,7 @@ module.exports = function() {
             return containers[0];
         }
         return null;
-    }
+    };
 
     RoomPosition.prototype.findContainerNearby = function() {
         const containers = this.findInRange(FIND_STRUCTURES, 1, {
@@ -30,7 +49,14 @@ module.exports = function() {
             return containers[0];
         }
         return null;
-    }
+    };
+
+    RoomPosition.prototype.findClosestTower = function() {
+        return this.findClosestByRange(FIND_MY_STRUCTURES, {
+            filter: (structure) => structure.structureType === STRUCTURE_TOWER &&
+                structure.energy < structure.energyCapacity / 2
+        });
+    };
 
     RoomPosition.prototype.findClosestSpawnOrExtension = function() {
         const extension = this.findClosestByRange(FIND_STRUCTURES, {
@@ -41,26 +67,26 @@ module.exports = function() {
         return extension ? extension : this.findClosestByRange(FIND_MY_SPAWNS, {
             filter: (structure) => structure.energy < structure.energyCapacity
         });
-    }
+    };
 
     RoomPosition.prototype.findClosestFilledSpawnOrExtension = function() {
         return this.findClosestByRange(FIND_STRUCTURES, {
             filter: (structure) => (structure.structureType === STRUCTURE_SPAWN ||
                 structure.structureType === STRUCTURE_EXTENSION) && structure.energy > structure.energyCapacity / 2
         });
-    }
+    };
 
     RoomPosition.prototype.findClosestStorage = function() {
         return this.findClosestByRange(FIND_STRUCTURES, {
             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
                 structure.store[RESOURCE_ENERGY] < structure.storeCapacity
         });
-    }
+    };
 
     RoomPosition.prototype.findClosestFilledStorage = function() {
         return this.findClosestByRange(FIND_STRUCTURES, {
             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
                 structure.store[RESOURCE_ENERGY] > 0
         });
-    }
-}
+    };
+};

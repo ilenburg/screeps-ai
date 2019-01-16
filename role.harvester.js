@@ -7,7 +7,6 @@ module.exports = function() {
         if (target) {
             if (this.harvest(target) === ERR_NOT_IN_RANGE) {
                 if (this.moveTo(target) === ERR_NO_PATH) {
-                    this.say('💤');
                     this.memory.role = 'idle';
                 }
             }
