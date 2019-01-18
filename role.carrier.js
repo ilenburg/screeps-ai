@@ -9,12 +9,16 @@ module.exports = function() {
     }
 
     if (this.memory.active) {
+        let actionResult;
         if (this.memory.targetId) {
             const target = Game.getObjectById(this.memory.targetId);
-            this.collect(target);
+            actionResult = this.collect(target);
         } else {
             const target = this.room.findGatheringSource();
-            this.collect(target);
+            actionResult = this.collect(target);
+        }
+        if (actionResult !== OK) {
+            this.moveTo(Game.getObjectById(this.memory.spawnId));
         }
     } else {
         const tower = this.pos.findClosestTower();
@@ -31,7 +35,7 @@ module.exports = function() {
 
             if (spawn) {
                 const container = spawn.pos.findContainerInArea();
-                if (container && Memory.shouldRefill) {
+                if (container && Memory.shouldStore) {
                     if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                         this.moveTo(container);
                     }
@@ -41,7 +45,7 @@ module.exports = function() {
                     }
                 }
             } else {
-                this.moveTo(Game.spawns['Spawn1']);
+                this.moveTo(Game.getObjectById(this.memory.spawnId));
             }
         }
     }

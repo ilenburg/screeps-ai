@@ -25,6 +25,7 @@ module.exports = function() {
         const constructionSites = this.room.find(FIND_CONSTRUCTION_SITES);
         if (constructionSites.length > 0) {
             const targetSite = getMostProgress(constructionSites);
+            this.build(targetSite);
             if (this.build(targetSite)) {
                 this.moveTo(targetSite);
             }

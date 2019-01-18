@@ -10,23 +10,47 @@ module.exports = function() {
         filter: creepFilter('idle')
     };
 
-    function RoleMemory(role, targetId) {
+    function RoleMemory(role, targetId, spawnId) {
         this.memory = {
             role: role,
-            targetId: targetId
+            targetId: targetId,
+            spawnId: spawnId
         };
     }
 
-    function AttackerRoleMemory(role, targetFlagName) {
+    function MerchantRoleMemory(merchantFlagName, storageId, spawnId) {
+        this.memory = {
+            role: 'merchant',
+            merchantFlagName: merchantFlagName,
+            storageId: storageId,
+            spawnId: spawnId
+        };
+    }
+
+    function AttackerRoleMemory(role, targetFlagName, spawnId) {
         this.memory = {
             role: role,
-            targetFlagName: targetFlagName
+            targetFlagName: targetFlagName,
+            spawnId: spawnId
         };
     }
 
     function creepFilter(role) {
         return function(creep) {
             return creep.memory.role === role;
+        }
+    }
+
+    function roomCreepFilter(spawnId) {
+        return function(creep) {
+            return creep.memory.spawnId === spawnId;
+        }
+    }
+
+    function consumerFilter(spawnId) {
+        return function(creep) {
+            return creep.memory.role === 'upgrader' || creep.memory.role === 'builder' ||
+                creep.memory.role === 'repair';
         }
     }
 
@@ -172,53 +196,11 @@ module.exports = function() {
         return null;
     }
 
-    StructureSpawn.prototype.spawnMiner = function(source) {
-        if (source) {
-            const creepBody = [WORK, WORK, MOVE];
-            fillMiner(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Miner' + Game.time, new RoleMemory('miner', source.id));
-        }
-        return ERR_INVALID_TARGET;
-    };
-
-    StructureSpawn.prototype.spawnHarvester = function(source) {
-        if (source) {
-            const creepBody = [WORK, MOVE, CARRY];
-            balacedFillWithParts(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Harvester' + Game.time, new RoleMemory('harvester', source.id));
-        }
-        return ERR_INVALID_TARGET;
-    };
-
-    StructureSpawn.prototype.spawnUpgrader = function() {
-        const creepBody = [WORK, MOVE, CARRY];
-        balacedFillWithParts(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Upgrader' + Game.time, new RoleMemory('upgrader', null));
-    };
-
-    StructureSpawn.prototype.spawnBuilder = function() {
-        const creepBody = [WORK, MOVE, CARRY];
-        balacedFillWithParts(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Builder' + Game.time, new RoleMemory('builder', null));
-    };
-
-    StructureSpawn.prototype.spawnCarrier = function() {
-        const creepBody = [CARRY, CARRY, MOVE];
-        fillCarrier(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Carrier' + Game.time, new RoleMemory('carrier', null));
-    };
-
-    StructureSpawn.prototype.spawnRepair = function() {
-        const creepBody = [WORK, MOVE, CARRY];
-        balacedFillWithParts(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Repairer' + Game.time, new RoleMemory('repair', null));
-    };
-
     StructureSpawn.prototype.spawnSamurai = function(attackFlag) {
         if (attackFlag) {
             const creepBody = [ATTACK, MOVE, ATTACK, MOVE];
             fillSamurai(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Samurai' + Game.time, new SamuraiRoleMemory('samurai', attackFlag.name));
+            return this.spawnCreep(creepBody, 'Samurai' + Game.time, new AttackerRoleMemory('samurai', attackFlag.name, this.id));
         }
         return ERR_INVALID_TARGET;
     };
@@ -227,9 +209,58 @@ module.exports = function() {
         if (attackFlag) {
             const creepBody = [CLAIM, MOVE];
             fillLord(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Lord' + Game.time, new AttackerRoleMemory('lord', attackFlag.name));
+            return this.spawnCreep(creepBody, 'Lord' + Game.time, new AttackerRoleMemory('lord', attackFlag.name, this.id));
         }
         return ERR_INVALID_TARGET;
+    };
+
+    StructureSpawn.prototype.spawnMiner = function(source) {
+        if (source) {
+            const creepBody = [WORK, WORK, MOVE];
+            fillMiner(creepBody, this.room.energyAvailable);
+            return this.spawnCreep(creepBody, 'Miner' + Game.time, new RoleMemory('miner', source.id, this.id));
+        }
+        return ERR_INVALID_TARGET;
+    };
+
+    StructureSpawn.prototype.spawnHarvester = function(source) {
+        if (source) {
+            const creepBody = [WORK, MOVE, CARRY];
+            balacedFillWithParts(creepBody, this.room.energyAvailable);
+            return this.spawnCreep(creepBody, 'Harvester' + Game.time, new RoleMemory('harvester', source.id, this.id));
+        }
+        return ERR_INVALID_TARGET;
+    };
+
+    StructureSpawn.prototype.spawnMerchant = function() {
+        const creepBody = [WORK, MOVE, CARRY];
+        balacedFillWithParts(creepBody, this.room.energyAvailable);
+        return this.spawnCreep(creepBody, 'Merchant' + Game.time, new MerchantRoleMemory(configuration.merchantFlagName, configuration.merchantStorageId, this.id));
+
+    };
+
+    StructureSpawn.prototype.spawnUpgrader = function() {
+        const creepBody = [WORK, MOVE, CARRY];
+        balacedFillWithParts(creepBody, this.room.energyAvailable);
+        return this.spawnCreep(creepBody, 'Upgrader' + Game.time, new RoleMemory('upgrader', null, this.id));
+    };
+
+    StructureSpawn.prototype.spawnBuilder = function() {
+        const creepBody = [WORK, MOVE, CARRY];
+        balacedFillWithParts(creepBody, this.room.energyAvailable);
+        return this.spawnCreep(creepBody, 'Builder' + Game.time, new RoleMemory('builder', null, this.id));
+    };
+
+    StructureSpawn.prototype.spawnCarrier = function() {
+        const creepBody = [CARRY, CARRY, MOVE];
+        fillCarrier(creepBody, this.room.energyAvailable);
+        return this.spawnCreep(creepBody, 'Carrier' + Game.time, new RoleMemory('carrier', null, this.id));
+    };
+
+    StructureSpawn.prototype.spawnRepair = function() {
+        const creepBody = [WORK, MOVE, CARRY];
+        balacedFillWithParts(creepBody, this.room.energyAvailable);
+        return this.spawnCreep(creepBody, 'Repairer' + Game.time, new RoleMemory('repair', null, this.id));
     };
 
     StructureSpawn.prototype.kill = function() {
@@ -241,7 +272,7 @@ module.exports = function() {
 
     StructureSpawn.prototype.produce = function() {
         const room = this.room;
-        const roomCreeps = room.find(FIND_MY_CREEPS);
+        const roomCreeps = _(Game.creeps).filter(roomCreepFilter(this.id)).values();
         const source = filterAvailableSource(roomCreeps, room.find(FIND_SOURCES));
         const attackFlag = Game.flags[configuration.attackFlagName];
         const amount = {
@@ -251,17 +282,19 @@ module.exports = function() {
             harvester: _(roomCreeps).filter(creepFilter('harvester')).size(),
             builder: _(roomCreeps).filter(creepFilter('builder')).size(),
             repairer: _(roomCreeps).filter(creepFilter('repair')).size(),
-            samurai: _(Game.creeps).filter(creepFilter('samurai')).size(),
-            lord: _(Game.creeps).filter(creepFilter('lord')).size()
+            samurai: _(roomCreeps).filter(creepFilter('samurai')).size(),
+            merchant: _(roomCreeps).filter(creepFilter('merchant')).size(),
+            lord: _(roomCreeps).filter(creepFilter('lord')).size()
         };
 
         const parts = {
-            miner: _(roomCreeps).filter(creepFilter('miner')).reduce(reduceCreep, 0),
-            carrier: _(roomCreeps).filter(creepFilter('carrier')).reduce(reduceCreep, 0)
+            miner: _(roomCreeps).filter(creepFilter('miner')).reduce(reduceWorkBody, 0),
+            carrier: _(roomCreeps).filter(creepFilter('carrier')).reduce(reduceCreep, 0),
+            consumer: _(roomCreeps).filter(consumerFilter()).reduce(reduceCreep, 0)
         };
 
         if (room.energyAvailable < room.energyCapacityAvailable &&
-            (source || parts.miner / parts.carrier > configuration.minerToCarrierRatio)) {
+            (source || parts.miner / parts.carrier > configuration.minerToCarrierRatio || amount.merchant < configuration.numberMerchant)) {
             Memory.shouldRefill = false;
         } else {
             Memory.shouldRefill = true;
@@ -269,6 +302,12 @@ module.exports = function() {
 
         if (this.energy === this.energyCapacity && amount.miner < 1 && amount.harvester < 1) {
             this.spawnHarvester(source);
+        }
+
+        if (room.energyAvailable < room.energyCapacityAvailable && (!Memory.shouldRefill || parts.miner / parts.consumer > configuration.minerToConsumerRatio)) {
+            Memory.shouldStore = false;
+        } else {
+            Memory.shouldStore = true;
         }
 
         if (room.energyAvailable === room.energyCapacityAvailable) {
@@ -282,16 +321,20 @@ module.exports = function() {
                 this.spawnCarrier();
             } else if (source) {
                 this.spawnMiner(source);
-            } else if (false && attackFlag && amount.samurai < configuration.numberSamurai) {
+            } else if (amount.merchant < configuration.numberMerchant) {
+                this.spawnMerchant();
+            } else if (attackFlag && amount.samurai < configuration.numberSamurai) {
                 this.spawnSamurai(attackFlag);
             } else if (attackFlag && amount.lord < configuration.numberLord) {
                 this.spawnLord(attackFlag);
-            } else if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
-                this.spawnRepair();
-            } else if (amount.builder < configuration.numberBuilder && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
-                this.spawnBuilder();
-            } else if (amount.upgrader < configuration.numberUpgrader) {
-                this.spawnUpgrader();
+            } else if (parts.miner / parts.consumer > configuration.minerToConsumerRatio) {
+                if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
+                    this.spawnRepair();
+                } else if (amount.builder < configuration.numberBuilder && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
+                    this.spawnBuilder();
+                } else {
+                    this.spawnUpgrader();
+                }
             }
         }
     };

@@ -1,12 +1,5 @@
 module.exports = function() {
 
-    RoomPosition.prototype.findClosestOtherController = function() {
-        return this.findClosestByRange(FIND_STRUCTURES, {
-            filter: structure => structure.structureType === STRUCTURE_CONTROLLER &&
-                !structure.my
-        });
-    };
-
     RoomPosition.prototype.findClosestHostileSpawn = function() {
         return this.findClosestByRange(FIND_HOSTILE_STRUCTURES, {
             filter: structure => structure.structureType === STRUCTURE_SPAWN
@@ -21,8 +14,8 @@ module.exports = function() {
 
     RoomPosition.prototype.findContainerInArea = function() {
         const containers = this.findInRange(FIND_STRUCTURES, 6, {
-            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
-                structure.store[RESOURCE_ENERGY] < structure.storeCapacity / 2
+            filter: (structure) => (structure.structureType === STRUCTURE_CONTAINER ||
+                structure.structureType == STRUCTURE_STORAGE) && structure.store[RESOURCE_ENERGY] < structure.storeCapacity / 2
         });
         if (containers.length > 0) {
             return containers[0];
@@ -32,9 +25,12 @@ module.exports = function() {
 
     RoomPosition.prototype.findFilledContainerInArea = function() {
         const containers = this.findInRange(FIND_STRUCTURES, 6, {
-            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
-                structure.store[RESOURCE_ENERGY] > 0
+            filter: (structure) => (structure.structureType === STRUCTURE_CONTAINER ||
+                structure.structureType === STRUCTURE_STORAGE) && structure.store[RESOURCE_ENERGY] > 0
         });
+
+        containers.sort((a, b) => b.store[RESOURCE_ENERGY] - a.store[RESOURCE_ENERGY]);
+
         if (containers.length > 0) {
             return containers[0];
         }

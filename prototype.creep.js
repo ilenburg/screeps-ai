@@ -9,7 +9,8 @@ module.exports = function() {
         builder: require('role.builder'),
         repair: require('role.repair'),
         samurai: require('role.samurai'),
-        lord: require('role.lord')
+        lord: require('role.lord'),
+        merchant: require('role.merchant')
     };
 
     Creep.prototype.seekAndAttack = function(target) {
@@ -36,13 +37,15 @@ module.exports = function() {
 
             if (actionResult !== OK) {
                 if (actionResult === ERR_NOT_IN_RANGE) {
-                    this.moveTo(target);
+                    actionResult = this.moveTo(target);
                 } else {
                     this.memory.targetId = null;
                 }
             }
+            return actionResult;
         } else {
             this.memory.targetId = null;
+            return ERR_INVALID_TARGET;
         }
     };
 
@@ -65,7 +68,7 @@ module.exports = function() {
                     this.moveTo(container);
                 }
             } else {
-                if (Memory.shouldRefill) {
+                if (Memory.shouldRefill && resource.energy > resource.energyCapacity / 2) {
                     if (this.withdraw(resource, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                         this.moveTo(resource);
                     }

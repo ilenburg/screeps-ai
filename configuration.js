@@ -1,10 +1,12 @@
 module.exports = {
-    numberUpgrader: 1,
     numberRepair: 1,
-    numberBuilder: 2,
-    numberSamurai: 1,
-    numberLord: 1,
-    minerToBuilderRatio: 1,
-    minerToCarrierRatio: 0.1,
-    attackFlagName: 'Enemy'
+    numberBuilder: 1,
+    numberSamurai: 0,
+    numberLord: 0,
+    numberMerchant: 2,
+    minerToCarrierRatio: 0.5,
+    minerToConsumerRatio: 0.05,
+    attackFlagName: 'Target',
+    merchantFlagName: 'Source',
+    merchantStorageId: '5c3ec5abca6284463c4fcf44'
 };
