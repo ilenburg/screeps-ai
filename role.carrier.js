@@ -1,6 +1,7 @@
 module.exports = function() {
 
     if (this.memory.active && this.carry[RESOURCE_ENERGY] === this.carryCapacity) {
+        this.memory.targetId = null
         this.memory.active = false;
     }
 
@@ -39,7 +40,7 @@ module.exports = function() {
 
             if (spawn) {
                 const container = spawn.pos.findContainerInArea();
-                if (container && Memory.shouldStore) {
+                if (container && (Memory.shouldStore || spawn.energy == spawn.energyCapacity)) {
                     if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                         this.moveTo(container);
                     }

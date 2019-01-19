@@ -1,14 +1,14 @@
 module.exports = function() {
 
     function reduceSite(mostProgressSite, nextSite) {
-        if (nextSite.amount > mostProgressSite.amount) {
+        if (nextSite.progress / nextSite.progressTotal > mostProgressSite.progress / mostProgressSite.progressTotal) {
             return nextSite;
         }
         return mostProgressSite;
     }
 
     function getMostProgress(sites) {
-        return sites.reduce(reduceSite, sites[0]);
+        return sites.reduce(reduceSite);
     }
 
     if (this.memory.refill && this.carry[RESOURCE_ENERGY] === this.carryCapacity) {

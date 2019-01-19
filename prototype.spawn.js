@@ -200,7 +200,7 @@ module.exports = function() {
         if (attackFlag) {
             const creepBody = [ATTACK, MOVE, ATTACK, MOVE];
             fillSamurai(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Samurai' + Game.time, new AttackerRoleMemory('samurai', attackFlag.name, this.id));
+            return this.spawnCreep(creepBody, 'Samurai-' + Game.time, new AttackerRoleMemory('samurai', attackFlag.name, this.id));
         }
         return ERR_INVALID_TARGET;
     };
@@ -209,7 +209,7 @@ module.exports = function() {
         if (attackFlag) {
             const creepBody = [CLAIM, MOVE];
             fillLord(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Lord' + Game.time, new AttackerRoleMemory('lord', attackFlag.name, this.id));
+            return this.spawnCreep(creepBody, 'Lord-' + Game.time, new AttackerRoleMemory('lord', attackFlag.name, this.id));
         }
         return ERR_INVALID_TARGET;
     };
@@ -218,7 +218,7 @@ module.exports = function() {
         if (source) {
             const creepBody = [WORK, WORK, MOVE];
             fillMiner(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Miner' + Game.time, new RoleMemory('miner', source.id, this.id));
+            return this.spawnCreep(creepBody, 'Miner-' + Game.time, new RoleMemory('miner', source.id, this.id));
         }
         return ERR_INVALID_TARGET;
     };
@@ -227,7 +227,7 @@ module.exports = function() {
         if (source) {
             const creepBody = [WORK, MOVE, CARRY];
             balacedFillWithParts(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Harvester' + Game.time, new RoleMemory('harvester', source.id, this.id));
+            return this.spawnCreep(creepBody, 'Harvester-' + Game.time, new RoleMemory('harvester', source.id, this.id));
         }
         return ERR_INVALID_TARGET;
     };
@@ -236,33 +236,33 @@ module.exports = function() {
         const configuration = configure(this.name);
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Merchant' + Game.time, new MerchantRoleMemory(configuration.merchantFlagName, configuration.merchantStorageId, this.id));
+        return this.spawnCreep(creepBody, 'Merchant-' + Game.time, new MerchantRoleMemory(configuration.merchantFlagName, configuration.merchantStorageId, this.id));
 
     };
 
     StructureSpawn.prototype.spawnUpgrader = function() {
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Upgrader' + Game.time, new RoleMemory('upgrader', null, this.id));
+        return this.spawnCreep(creepBody, 'Upgrader-' + Game.time, new RoleMemory('upgrader', null, this.id));
     };
 
     StructureSpawn.prototype.spawnBuilder = function() {
         const configuration = configure(this.name);
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Builder' + Game.time, new RoleMemory('builder', configuration.longRangeBuildTargetId, this.id));
+        return this.spawnCreep(creepBody, 'Builder-' + Game.time, new RoleMemory('builder', configuration.longRangeBuildTargetId, this.id));
     };
 
     StructureSpawn.prototype.spawnCarrier = function() {
         const creepBody = [CARRY, CARRY, MOVE];
         fillCarrier(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Carrier' + Game.time, new RoleMemory('carrier', null, this.id));
+        return this.spawnCreep(creepBody, 'Carrier-' + Game.time, new RoleMemory('carrier', null, this.id));
     };
 
     StructureSpawn.prototype.spawnRepair = function() {
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Repairer' + Game.time, new RoleMemory('repair', null, this.id));
+        return this.spawnCreep(creepBody, 'Repairer-' + Game.time, new RoleMemory('repair', null, this.id));
     };
 
     StructureSpawn.prototype.kill = function() {
