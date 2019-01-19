@@ -308,9 +308,9 @@ module.exports = function() {
         }
 
         if (room.energyAvailable < room.energyCapacityAvailable && (!room.memory.shouldRefill || parts.miner / parts.consumer > configuration.minerToConsumerRatio)) {
-            room.memory.shouldRefill = false;
+            room.memory.shouldStore = false;
         } else {
-            room.memory.shouldRefill = true;
+            room.memory.shouldStore = true;
         }
 
         if (room.energyAvailable === room.energyCapacityAvailable) {

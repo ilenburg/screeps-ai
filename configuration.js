@@ -6,12 +6,12 @@ module.exports = function(spawnName) {
 
     const config = {
         global: {
-            numberRepair: 0,
-            numberBuilder: 0,
+            numberRepair: 1,
+            numberBuilder: 1,
             numberSamurai: 0,
             numberLord: 0,
             numberMerchant: 1,
-            minerToCarrierRatio: 0.15,
+            minerToCarrierRatio: 0.1,
             minerToConsumerRatio: 0.15,
             attackFlagName: 'Target',
             merchantFlagName: 'Source',
@@ -21,8 +21,8 @@ module.exports = function(spawnName) {
         Spawn2: {
             numberBuilder: 8,
             numberMerchant: 0,
-            minerToCarrierRatio: 0.3,
-            minerToConsumerRatio: 0.2,
+            minerToCarrierRatio: 0.2,
+            minerToConsumerRatio: 0.15,
             numberRepair: 1
         }
     };

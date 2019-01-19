@@ -1,9 +1,11 @@
 module.exports = function() {
 
     StructureTower.prototype.defend = function() {
-        if (this.attackNearestHostile() !== OK) {
-            if (this.healNearestDamagedCreep() !== OK) {
-                this.repairNearestStructure();
+        if (this.energy > 0) {
+            if (this.attackNearestHostile() !== OK) {
+                if (this.healNearestDamagedCreep() !== OK) {
+                    this.repairNearestStructure();
+                }
             }
         }
     };
@@ -27,12 +29,12 @@ module.exports = function() {
     };
 
     StructureTower.prototype.repairNearestStructure = function() {
-        const damagedStructures = this.pos.findClosestByRange(FIND_STRUCTURES, {
+        const damagedStructure = this.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: structure => structure.hits < structure.hitsMax &&
                 structure.structureType !== STRUCTURE_WALL
         });
-        if (damagedStructures.length > 0) {
-            return this.repair(damagedStructures[0]);
+        if (damagedStructure) {
+            return this.repair(damagedStructure);
         }
         return ERR_INVALID_TARGET;
     };

@@ -2,7 +2,7 @@ module.exports = function() {
 
     RoomPosition.prototype.isNearMiner = function() {
         return this.findInRange(FIND_MY_CREEPS, 1, {
-            filter: creep => creep.memory.role === 'miner'
+            filter: creep => creep.memory.role === 'miner' && creep.ticksToLive > CREEP_LIFE_TIME / 10
         }).length > 0;
     };
 
