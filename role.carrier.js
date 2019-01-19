@@ -27,7 +27,7 @@ module.exports = function() {
         }
     } else {
         const tower = this.pos.findClosestTower();
-        if (tower && Memory.shouldRefill) {
+        if (tower && this.room.memory.shouldRefill) {
             if (this.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                 this.moveTo(tower);
             }
@@ -40,13 +40,16 @@ module.exports = function() {
 
             if (spawn) {
                 const container = spawn.pos.findContainerInArea();
-                if (container && (Memory.shouldStore || spawn.energy == spawn.energyCapacity)) {
+                if (container && this.room.memory.shouldStore) {
                     if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                         this.moveTo(container);
                     }
                 } else {
-                    if (this.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                    const transferResult = this.transfer(spawn, RESOURCE_ENERGY);
+                    if (transferResult === ERR_NOT_IN_RANGE) {
                         this.moveTo(spawn);
+                    } else if (transferResult === ERR_FULL) {
+                        this.moveTo(this.pos.findFleeMovement(spawn.pos));
                     }
                 }
             } else {

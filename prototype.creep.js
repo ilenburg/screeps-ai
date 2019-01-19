@@ -1,5 +1,9 @@
 module.exports = function() {
 
+    function randomDirection() {
+        return Math.floor((Math.random() * 8) + 1);
+    }
+
     const roles = {
         miner: require('role.miner'),
         carrier: require('role.carrier'),
@@ -68,10 +72,12 @@ module.exports = function() {
                     this.moveTo(container);
                 }
             } else {
-                if (Memory.shouldRefill && resource.energy > resource.energyCapacity / 2) {
+                if (this.room.memory.shouldRefill && resource.energy > resource.energyCapacity / 2) {
                     if (this.withdraw(resource, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                         this.moveTo(resource);
                     }
+                } else {
+                    this.move(randomDirection());
                 }
             }
         }

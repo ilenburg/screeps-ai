@@ -11,7 +11,7 @@ module.exports = function() {
         if (target) {
             if (this.harvest(target) === ERR_NOT_IN_RANGE) {
                 const nearbyContainer = target.pos.findContainerNearby();
-                if (nearbyContainer) {
+                if (nearbyContainer && !nearbyContainer.pos.isNearMiner()) {
                     this.memory.targetContainerId = nearbyContainer.id;
                     this.moveTo(nearbyContainer);
                 } else {

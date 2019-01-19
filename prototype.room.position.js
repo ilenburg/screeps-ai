@@ -1,5 +1,20 @@
 module.exports = function() {
 
+    RoomPosition.prototype.isNearMiner = function() {
+        return this.findInRange(FIND_MY_CREEPS, 1, {
+            filter: creep => creep.memory.role === 'miner'
+        }).length > 0;
+    };
+
+    RoomPosition.prototype.findFleeMovement = function(targetPos) {
+        return PathFinder.search(this, {
+            pos: targetPos,
+            range: 2
+        }, {
+            flee: true
+        }).path[0];
+    };
+
     RoomPosition.prototype.findTomb = function() {
         return this.findClosestByRange(FIND_TOMBSTONES, {
             filter: tomb => tomb.store[RESOURCE_ENERGY] > 0

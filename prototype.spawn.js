@@ -186,7 +186,7 @@ module.exports = function() {
 
     function filterAvailableSource(roomCreeps, sources) {
         for (var i = 0; i < sources.length; i++) {
-            const sourceCreeps = _(roomCreeps).filter(sourceFilter(sources[i].id)).value();
+            const sourceCreeps = _(roomCreeps).filter(creepFilter('miner')).filter(sourceFilter(sources[i].id)).value();
             if ((sources[i].getHarvestSlots() > sourceCreeps.length &&
                     sourceCreeps.reduce(reduceWorkBody, 0) < 5) ||
                 (sourceCreeps.length === 1 && sourceCreeps[0].ticksToLive < CREEP_LIFE_TIME / 10)) {
@@ -298,19 +298,19 @@ module.exports = function() {
 
         if (room.energyAvailable < room.energyCapacityAvailable &&
             (source || parts.miner / parts.carrier > configuration.minerToCarrierRatio || amount.merchant < configuration.numberMerchant)) {
-            Memory.shouldRefill = false;
+            room.memory.shouldRefill = false;
         } else {
-            Memory.shouldRefill = true;
+            room.memory.shouldRefill = true;
         }
 
         if ((this.energy === this.energyCapacity || room.energyCapacityAvailable >= SPAWN_ENERGY_CAPACITY) && amount.miner < 1 && amount.harvester < 1) {
             this.spawnHarvester(source);
         }
 
-        if (room.energyAvailable < room.energyCapacityAvailable && (!Memory.shouldRefill || parts.miner / parts.consumer > configuration.minerToConsumerRatio)) {
-            Memory.shouldStore = false;
+        if (room.energyAvailable < room.energyCapacityAvailable && (!room.memory.shouldRefill || parts.miner / parts.consumer > configuration.minerToConsumerRatio)) {
+            room.memory.shouldRefill = false;
         } else {
-            Memory.shouldStore = true;
+            room.memory.shouldRefill = true;
         }
 
         if (room.energyAvailable === room.energyCapacityAvailable) {
