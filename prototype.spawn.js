@@ -1,4 +1,4 @@
-const configuration = require('configuration');
+const configure = require('configuration');
 
 module.exports = function() {
 
@@ -189,7 +189,7 @@ module.exports = function() {
             const sourceCreeps = _(roomCreeps).filter(sourceFilter(sources[i].id)).value();
             if ((sources[i].getHarvestSlots() > sourceCreeps.length &&
                     sourceCreeps.reduce(reduceWorkBody, 0) < 5) ||
-                (sourceCreeps.length === 1 && sourceCreeps[0].ticksToLive < 200)) {
+                (sourceCreeps.length === 1 && sourceCreeps[0].ticksToLive < CREEP_LIFE_TIME / 10)) {
                 return sources[i];
             }
         }
@@ -233,6 +233,7 @@ module.exports = function() {
     };
 
     StructureSpawn.prototype.spawnMerchant = function() {
+        const configuration = configure(this.name);
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Merchant' + Game.time, new MerchantRoleMemory(configuration.merchantFlagName, configuration.merchantStorageId, this.id));
@@ -246,9 +247,10 @@ module.exports = function() {
     };
 
     StructureSpawn.prototype.spawnBuilder = function() {
+        const configuration = configure(this.name);
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
-        return this.spawnCreep(creepBody, 'Builder' + Game.time, new RoleMemory('builder', null, this.id));
+        return this.spawnCreep(creepBody, 'Builder' + Game.time, new RoleMemory('builder', configuration.longRangeBuildTargetId, this.id));
     };
 
     StructureSpawn.prototype.spawnCarrier = function() {
@@ -272,6 +274,7 @@ module.exports = function() {
 
     StructureSpawn.prototype.produce = function() {
         const room = this.room;
+        const configuration = configure(this.name);
         const roomCreeps = _(Game.creeps).filter(roomCreepFilter(this.id)).values();
         const source = filterAvailableSource(roomCreeps, room.find(FIND_SOURCES));
         const attackFlag = Game.flags[configuration.attackFlagName];
@@ -300,7 +303,7 @@ module.exports = function() {
             Memory.shouldRefill = true;
         }
 
-        if (this.energy === this.energyCapacity && amount.miner < 1 && amount.harvester < 1) {
+        if ((this.energy === this.energyCapacity || room.energyCapacityAvailable >= SPAWN_ENERGY_CAPACITY) && amount.miner < 1 && amount.harvester < 1) {
             this.spawnHarvester(source);
         }
 
@@ -330,7 +333,7 @@ module.exports = function() {
             } else if (parts.miner / parts.consumer > configuration.minerToConsumerRatio) {
                 if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
                     this.spawnRepair();
-                } else if (amount.builder < configuration.numberBuilder && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
+                } else if (amount.builder < configuration.numberBuilder && (room.find(FIND_CONSTRUCTION_SITES).length > 0 || configuration.longRangeBuildTargetId)) {
                     this.spawnBuilder();
                 } else {
                     this.spawnUpgrader();

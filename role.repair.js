@@ -26,6 +26,8 @@ module.exports = function() {
                 if (this.repair(targets[0]) == ERR_NOT_IN_RANGE) {
                     this.moveTo(targets[0]);
                 }
+            } else {
+                this.memory.role = 'idle';
             }
         }
     }

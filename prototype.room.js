@@ -38,7 +38,7 @@ module.exports = function() {
     function selectTarget(energyStorage, resource) {
         if (energyStorage) {
             if (resource) {
-                return energyStorage.store[RESOURCE_ENERGY] > resource.amount ? energyStorage : resource;
+                return energyStorage.store[RESOURCE_ENERGY] / 10 > resource.amount ? energyStorage : resource;
             }
             return energyStorage;
         } else if (resource) {

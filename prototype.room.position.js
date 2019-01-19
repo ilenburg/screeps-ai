@@ -1,5 +1,11 @@
 module.exports = function() {
 
+    RoomPosition.prototype.findTomb = function() {
+        return this.findClosestByRange(FIND_TOMBSTONES, {
+            filter: tomb => tomb.store[RESOURCE_ENERGY] > 0
+        });
+    };
+
     RoomPosition.prototype.findClosestHostileSpawn = function() {
         return this.findClosestByRange(FIND_HOSTILE_STRUCTURES, {
             filter: structure => structure.structureType === STRUCTURE_SPAWN

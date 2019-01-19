@@ -27,7 +27,7 @@ module.exports = function() {
     };
 
     StructureTower.prototype.repairNearestStructure = function() {
-        const damagedStructures = this.pos.findInRange(FIND_STRUCTURES, 10, {
+        const damagedStructures = this.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: structure => structure.hits < structure.hitsMax &&
                 structure.structureType !== STRUCTURE_WALL
         });

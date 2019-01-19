@@ -9,12 +9,16 @@ module.exports = function() {
     }
 
     if (this.memory.active) {
+        let target;
         let actionResult;
         if (this.memory.targetId) {
-            const target = Game.getObjectById(this.memory.targetId);
+            target = Game.getObjectById(this.memory.targetId);
             actionResult = this.collect(target);
         } else {
-            const target = this.room.findGatheringSource();
+            target = this.pos.findTomb();
+            if (!target) {
+                target = this.room.findGatheringSource();
+            }
             actionResult = this.collect(target);
         }
         if (actionResult !== OK) {

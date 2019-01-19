@@ -22,13 +22,24 @@ module.exports = function() {
     if (this.memory.refill) {
         this.refill();
     } else {
-        const constructionSites = this.room.find(FIND_CONSTRUCTION_SITES);
-        if (constructionSites.length > 0) {
-            const targetSite = getMostProgress(constructionSites);
-            this.build(targetSite);
-            if (this.build(targetSite)) {
+        let targetSite;
+        if (this.memory.targetId) {
+            targetSite = Game.getObjectById(this.memory.targetId);
+            if (!targetSite) {
+                this.memory.targetId = null;
+            }
+        } else {
+            const constructionSites = this.room.find(FIND_CONSTRUCTION_SITES);
+            if (constructionSites.length > 0) {
+                targetSite = getMostProgress(constructionSites);
+            }
+        }
+        if (targetSite) {
+            if (this.build(targetSite) === ERR_NOT_IN_RANGE) {
                 this.moveTo(targetSite);
             }
+        } else {
+            this.memory.role = 'idle';
         }
     }
 };

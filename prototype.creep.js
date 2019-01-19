@@ -60,7 +60,7 @@ module.exports = function() {
     };
 
     Creep.prototype.refill = function() {
-        const resource = this.pos.findClosestByRange(FIND_MY_SPAWNS);
+        const resource = Game.getObjectById(this.memory.spawnId);
         if (resource) {
             const container = resource.pos.findFilledContainerInArea();
             if (container) {
