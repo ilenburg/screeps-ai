@@ -6,6 +6,10 @@ module.exports = function() {
         }).length > 0;
     };
 
+    RoomPosition.prototype.isNearSource = function() {
+        return this.findInRange(FIND_SOURCES, 1).length > 0;
+    };
+
     RoomPosition.prototype.findFleeMovement = function(targetPos) {
         return PathFinder.search(this, {
             pos: targetPos,
@@ -30,6 +34,14 @@ module.exports = function() {
     RoomPosition.prototype.findClosestWall = function() {
         return this.findClosestByRange(FIND_STRUCTURES, {
             filter: (structure) => structure.structureType === STRUCTURE_WALL
+        });
+    };
+
+    RoomPosition.prototype.findDeposit = function() {
+        return this.findClosestByRange(FIND_STRUCTURES, {
+            filter: (structure) => (structure.structureType === STRUCTURE_CONTAINER ||
+                    structure.structureType == STRUCTURE_STORAGE) && structure.store[RESOURCE_ENERGY] < structure.storeCapacity / 2 &&
+                !structure.pos.isNearSource()
         });
     };
 
@@ -83,27 +95,6 @@ module.exports = function() {
 
         return extension ? extension : this.findClosestByRange(FIND_MY_SPAWNS, {
             filter: (structure) => structure.energy < structure.energyCapacity
-        });
-    };
-
-    RoomPosition.prototype.findClosestFilledSpawnOrExtension = function() {
-        return this.findClosestByRange(FIND_STRUCTURES, {
-            filter: (structure) => (structure.structureType === STRUCTURE_SPAWN ||
-                structure.structureType === STRUCTURE_EXTENSION) && structure.energy > structure.energyCapacity / 2
-        });
-    };
-
-    RoomPosition.prototype.findClosestStorage = function() {
-        return this.findClosestByRange(FIND_STRUCTURES, {
-            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
-                structure.store[RESOURCE_ENERGY] < structure.storeCapacity
-        });
-    };
-
-    RoomPosition.prototype.findClosestFilledStorage = function() {
-        return this.findClosestByRange(FIND_STRUCTURES, {
-            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
-                structure.store[RESOURCE_ENERGY] > 0
         });
     };
 };

@@ -63,6 +63,14 @@ module.exports = function() {
         return selectTarget(energyStorage, resource);
     };
 
+    Room.prototype.droppedResourceExists = function() {
+        const resource = getGreaterPile(this.find(FIND_DROPPED_RESOURCES));
+        if (resource && resource.amount > 500) {
+            return true;
+        }
+        return false;
+    };
+
     Room.prototype.findSortedRepairableStructures = function() {
         return (this.find(FIND_STRUCTURES, {
             filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL

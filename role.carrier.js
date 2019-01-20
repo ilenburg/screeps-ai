@@ -26,35 +26,37 @@ module.exports = function() {
             this.moveTo(Game.getObjectById(this.memory.spawnId));
         }
     } else {
-        const tower = this.pos.findClosestTower();
-        if (tower && this.room.memory.shouldRefill) {
-            if (this.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                this.moveTo(tower);
-            }
-        } else {
-            let spawn = this.pos.findClosestSpawnOrExtension();
-
-            if (!spawn) {
-                spawn = this.pos.findClosestByRange(FIND_MY_SPAWNS);
-            }
-
-            if (spawn) {
-                const container = spawn.pos.findContainerInArea();
-                if (container && this.room.memory.shouldStore) {
-                    if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        this.moveTo(container);
-                    }
-                } else {
-                    const transferResult = this.transfer(spawn, RESOURCE_ENERGY);
-                    if (transferResult === ERR_NOT_IN_RANGE) {
-                        this.moveTo(spawn);
-                    } else if (transferResult === ERR_FULL) {
-                        this.moveTo(this.pos.findFleeMovement(spawn.pos));
-                    }
+        if(this.room.name === Game.getObjectById(this.memory.spawnId).room.name) {
+            const tower = this.pos.findClosestTower();
+            if (tower && this.room.memory.shouldRefill) {
+                if (this.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                    this.moveTo(tower);
                 }
             } else {
-                this.moveTo(Game.getObjectById(this.memory.spawnId));
+                let spawn = this.pos.findClosestSpawnOrExtension();
+    
+                if (!spawn) {
+                    spawn = this.pos.findClosestByRange(FIND_MY_SPAWNS);
+                }
+    
+                if (spawn) {
+                    const container = this.pos.findDeposit();
+                    if (container && this.room.memory.shouldStore) {
+                        if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                            this.moveTo(container);
+                        }
+                    } else {
+                        const transferResult = this.transfer(spawn, RESOURCE_ENERGY);
+                        if (transferResult === ERR_NOT_IN_RANGE) {
+                            this.moveTo(spawn);
+                        } else if (transferResult === ERR_FULL) {
+                            this.moveTo(this.pos.findFleeMovement(spawn.pos));
+                        }
+                    }
+                }
             }
+        } else {
+            this.moveTo(Game.getObjectById(this.memory.spawnId));
         }
     }
 };

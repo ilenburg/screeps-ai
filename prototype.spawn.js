@@ -151,6 +151,10 @@ module.exports = function() {
             } else {
                 break;
             }
+
+            if (body.length >= 20) {
+                break;
+            }
         }
     }
 
@@ -273,70 +277,74 @@ module.exports = function() {
     };
 
     StructureSpawn.prototype.produce = function() {
-        const room = this.room;
-        const configuration = configure(this.name);
-        const roomCreeps = _(Game.creeps).filter(roomCreepFilter(this.id)).values();
-        const source = filterAvailableSource(roomCreeps, room.find(FIND_SOURCES));
-        const attackFlag = Game.flags[configuration.attackFlagName];
-        const amount = {
-            miner: _(roomCreeps).filter(creepFilter('miner')).size(),
-            carrier: _(roomCreeps).filter(creepFilter('carrier')).size(),
-            upgrader: _(roomCreeps).filter(creepFilter('upgrader')).size(),
-            harvester: _(roomCreeps).filter(creepFilter('harvester')).size(),
-            builder: _(roomCreeps).filter(creepFilter('builder')).size(),
-            repairer: _(roomCreeps).filter(creepFilter('repair')).size(),
-            samurai: _(roomCreeps).filter(creepFilter('samurai')).size(),
-            merchant: _(roomCreeps).filter(creepFilter('merchant')).size(),
-            lord: _(roomCreeps).filter(creepFilter('lord')).size()
-        };
+        if (!this.spawning) {
+            const room = this.room;
+            const configuration = configure(this.name);
+            const roomCreeps = _(Game.creeps).filter(roomCreepFilter(this.id)).values();
+            const source = filterAvailableSource(roomCreeps, room.find(FIND_SOURCES));
+            const attackFlag = Game.flags[configuration.attackFlagName];
+            const amount = {
+                miner: _(roomCreeps).filter(creepFilter('miner')).size(),
+                carrier: _(roomCreeps).filter(creepFilter('carrier')).size(),
+                upgrader: _(roomCreeps).filter(creepFilter('upgrader')).size(),
+                harvester: _(roomCreeps).filter(creepFilter('harvester')).size(),
+                builder: _(roomCreeps).filter(creepFilter('builder')).size(),
+                repairer: _(roomCreeps).filter(creepFilter('repair')).size(),
+                samurai: _(roomCreeps).filter(creepFilter('samurai')).size(),
+                merchant: _(roomCreeps).filter(creepFilter('merchant')).size(),
+                lord: _(roomCreeps).filter(creepFilter('lord')).size()
+            };
 
-        const parts = {
-            miner: _(roomCreeps).filter(creepFilter('miner')).reduce(reduceWorkBody, 0),
-            carrier: _(roomCreeps).filter(creepFilter('carrier')).reduce(reduceCreep, 0),
-            consumer: _(roomCreeps).filter(consumerFilter()).reduce(reduceCreep, 0)
-        };
+            const parts = {
+                miner: _(roomCreeps).filter(creepFilter('miner')).reduce(reduceWorkBody, 0),
+                carrier: _(roomCreeps).filter(creepFilter('carrier')).reduce(reduceCreep, 0),
+                consumer: _(roomCreeps).filter(consumerFilter()).reduce(reduceCreep, 0)
+            };
 
-        if (room.energyAvailable < room.energyCapacityAvailable &&
-            (source || parts.miner / parts.carrier > configuration.minerToCarrierRatio || amount.merchant < configuration.numberMerchant)) {
-            room.memory.shouldRefill = false;
-        } else {
-            room.memory.shouldRefill = true;
-        }
+            if (room.energyAvailable < room.energyCapacityAvailable &&
+                (source || parts.miner / parts.carrier > configuration.minerToCarrierRatio || amount.merchant < configuration.numberMerchant)) {
+                room.memory.shouldRefill = false;
+            } else {
+                room.memory.shouldRefill = true;
+            }
 
-        if ((this.energy === this.energyCapacity || room.energyCapacityAvailable >= SPAWN_ENERGY_CAPACITY) && amount.miner < 1 && amount.harvester < 1) {
-            this.spawnHarvester(source);
-        }
+            if ((this.energy === this.energyCapacity || room.energyCapacityAvailable >= SPAWN_ENERGY_CAPACITY) && amount.miner < 1 && amount.harvester < 1) {
+                this.spawnHarvester(source);
+            }
 
-        if (room.energyAvailable < room.energyCapacityAvailable && (!room.memory.shouldRefill || parts.miner / parts.consumer > configuration.minerToConsumerRatio)) {
-            room.memory.shouldStore = false;
-        } else {
-            room.memory.shouldStore = true;
-        }
+            if (room.energyAvailable < room.energyCapacityAvailable && (!room.memory.shouldRefill || parts.miner / parts.consumer > configuration.minerToConsumerRatio)) {
+                room.memory.shouldStore = false;
+            } else {
+                room.memory.shouldStore = true;
+            }
 
-        if (room.energyAvailable === room.energyCapacityAvailable) {
-            if (amount.miner < 1) {
-                if (amount.carrier < 1 && amount.harvester < 1) {
-                    this.spawnHarvester(source);
-                } else {
+            if (room.energyAvailable === room.energyCapacityAvailable) {
+                if (amount.miner < 1) {
+                    if (amount.carrier < 1 && amount.harvester < 1) {
+                        this.spawnHarvester(source);
+                    } else if (room.droppedResourceExists()) {
+                        this.spawnCarrier();
+                    } else {
+                        this.spawnMiner(source);
+                    }
+                } else if (parts.miner / parts.carrier > configuration.minerToCarrierRatio) {
+                    this.spawnCarrier();
+                } else if (source) {
                     this.spawnMiner(source);
-                }
-            } else if (parts.miner / parts.carrier > configuration.minerToCarrierRatio) {
-                this.spawnCarrier();
-            } else if (source) {
-                this.spawnMiner(source);
-            } else if (amount.merchant < configuration.numberMerchant) {
-                this.spawnMerchant();
-            } else if (attackFlag && amount.samurai < configuration.numberSamurai) {
-                this.spawnSamurai(attackFlag);
-            } else if (attackFlag && amount.lord < configuration.numberLord) {
-                this.spawnLord(attackFlag);
-            } else if (parts.miner / parts.consumer > configuration.minerToConsumerRatio) {
-                if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
-                    this.spawnRepair();
-                } else if (amount.builder < configuration.numberBuilder && (room.find(FIND_CONSTRUCTION_SITES).length > 0 || configuration.longRangeBuildTargetId)) {
-                    this.spawnBuilder();
-                } else {
-                    this.spawnUpgrader();
+                } else if (amount.merchant < configuration.numberMerchant) {
+                    this.spawnMerchant();
+                } else if (attackFlag && amount.samurai < configuration.numberSamurai) {
+                    this.spawnSamurai(attackFlag);
+                } else if (attackFlag && amount.lord < configuration.numberLord) {
+                    this.spawnLord(attackFlag);
+                } else if (parts.miner / parts.consumer > configuration.minerToConsumerRatio) {
+                    if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
+                        this.spawnRepair();
+                    } else if (amount.builder < configuration.numberBuilder && (room.find(FIND_CONSTRUCTION_SITES).length > 0 || configuration.longRangeBuildTargetId)) {
+                        this.spawnBuilder();
+                    } else {
+                        this.spawnUpgrader();
+                    }
                 }
             }
         }
