@@ -10,6 +10,10 @@ module.exports = function() {
         filter: creepFilter('idle')
     };
 
+    const filterExtractor = {
+        filter: structure => structure.structureType === STRUCTURE_EXTRACTOR
+    };
+
     function RoleMemory(role, targetId, spawnId) {
         this.memory = {
             role: role,
@@ -54,9 +58,9 @@ module.exports = function() {
         }
     }
 
-    function sourceFilter(sourceId) {
+    function targetFilter(targetId) {
         return function(creep) {
-            return creep.memory.targetId === sourceId;
+            return creep.memory.targetId === targetId;
         }
     }
 
@@ -188,13 +192,12 @@ module.exports = function() {
         return workPartAcumulator + creep.getActiveBodyparts(WORK);
     }
 
-    function filterAvailableSource(roomCreeps, sources) {
-        for (var i = 0; i < sources.length; i++) {
-            const sourceCreeps = _(roomCreeps).filter(creepFilter('miner')).filter(sourceFilter(sources[i].id)).value();
-            if ((sources[i].getHarvestSlots() > sourceCreeps.length &&
-                    sourceCreeps.reduce(reduceWorkBody, 0) < 5) ||
+    function filterAvailableTarget(roomCreeps, targets) {
+        for (let i = 0; i < targets.length; i++) {
+            const sourceCreeps = _(roomCreeps).filter(creepFilter('miner')).filter(targetFilter(targets[i].id)).value();
+            if ((targets[i].pos.getHarvestSlots() > sourceCreeps.length && sourceCreeps.reduce(reduceWorkBody, 0) < 5) ||
                 (sourceCreeps.length === 1 && sourceCreeps[0].ticksToLive < CREEP_LIFE_TIME / 10)) {
-                return sources[i];
+                return targets[i];
             }
         }
         return null;
@@ -218,11 +221,11 @@ module.exports = function() {
         return ERR_INVALID_TARGET;
     };
 
-    StructureSpawn.prototype.spawnMiner = function(source) {
-        if (source) {
+    StructureSpawn.prototype.spawnMiner = function(target) {
+        if (target) {
             const creepBody = [WORK, WORK, MOVE];
             fillMiner(creepBody, this.room.energyAvailable);
-            return this.spawnCreep(creepBody, 'Miner-' + Game.time, new RoleMemory('miner', source.id, this.id));
+            return this.spawnCreep(creepBody, 'Miner-' + Game.time, new RoleMemory('miner', target.id, this.id));
         }
         return ERR_INVALID_TARGET;
     };
@@ -277,11 +280,12 @@ module.exports = function() {
     };
 
     StructureSpawn.prototype.produce = function() {
-        if (!this.spawning) {
+        if (!this.spawning && this.room.energyCapacityAvailable >= SPAWN_ENERGY_CAPACITY) {
             const room = this.room;
             const configuration = configure(this.name);
             const roomCreeps = _(Game.creeps).filter(roomCreepFilter(this.id)).values();
-            const source = filterAvailableSource(roomCreeps, room.find(FIND_SOURCES));
+            const source = filterAvailableTarget(roomCreeps, room.find(FIND_SOURCES));
+            const extractor = room.find(FIND_STRUCTURES, filterExtractor).length > 0 ? filterAvailableTarget(roomCreeps, room.find(FIND_MINERALS)) : null;
             const attackFlag = Game.flags[configuration.attackFlagName];
             const amount = {
                 miner: _(roomCreeps).filter(creepFilter('miner')).size(),
@@ -302,7 +306,7 @@ module.exports = function() {
             };
 
             if (room.energyAvailable < room.energyCapacityAvailable &&
-                (source || parts.miner / parts.carrier > configuration.minerToCarrierRatio || amount.merchant < configuration.numberMerchant)) {
+                (source || extractor || parts.miner / parts.carrier > configuration.minerToCarrierRatio || amount.merchant < configuration.numberMerchant)) {
                 room.memory.shouldRefill = false;
             } else {
                 room.memory.shouldRefill = true;
@@ -331,6 +335,11 @@ module.exports = function() {
                     this.spawnCarrier();
                 } else if (source) {
                     this.spawnMiner(source);
+                } else if (extractor) {
+                    const minerals = room.find(FIND_MINERALS);
+                    if (minerals.length > 0) {
+                        this.spawnMiner(minerals[0]);
+                    }
                 } else if (amount.merchant < configuration.numberMerchant) {
                     this.spawnMerchant();
                 } else if (attackFlag && amount.samurai < configuration.numberSamurai) {

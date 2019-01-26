@@ -15,7 +15,7 @@ module.exports = function() {
     }
 
     function reduceContainer(filledContainer, nextContainer) {
-        if (nextContainer.store[RESOURCE_ENERGY] > filledContainer.store[RESOURCE_ENERGY]) {
+        if (_.sum(nextContainer.store) > _.sum(filledContainer.store)) {
             return nextContainer;
         }
         return filledContainer;
@@ -28,17 +28,17 @@ module.exports = function() {
         return null;
     }
 
-    function filterContainer(spawn) {
+    function filterContainer() {
         return {
             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
-                structure.store[RESOURCE_ENERGY] > 0 && !spawn.pos.inRangeTo(structure.pos, 5)
+                _.sum(structure.store) > 0 && (structure.pos.findInRange(FIND_SOURCES, 1).length > 0 || structure.pos.findInRange(FIND_MINERALS, 1).length > 0)
         }
     }
 
     function selectTarget(energyStorage, resource) {
         if (energyStorage) {
             if (resource) {
-                return energyStorage.store[RESOURCE_ENERGY] / 2 > resource.amount ? energyStorage : resource;
+                return _.sum(energyStorage.store) / 2 > resource.amount ? energyStorage : resource;
             }
             return energyStorage;
         } else if (resource) {
@@ -58,7 +58,7 @@ module.exports = function() {
     };
 
     Room.prototype.findGatheringSource = function() {
-        const energyStorage = getFilledContainer(this.find(FIND_STRUCTURES, filterContainer(this.find(FIND_MY_SPAWNS)[0])));
+        const energyStorage = getFilledContainer(this.find(FIND_STRUCTURES, filterContainer()));
         const resource = getGreaterPile(this.find(FIND_DROPPED_RESOURCES));
         return selectTarget(energyStorage, resource);
     };

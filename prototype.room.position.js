@@ -1,5 +1,18 @@
 module.exports = function() {
 
+    RoomPosition.prototype.getHarvestSlots = function() {
+        const terrain = new Room.Terrain(this.roomName);
+        let harvestSlots = 0;
+        for (var i = -1; i < 2; i++) {
+            for (var j = -1; j < 2; j++) {
+                if (terrain.get(this.x + i, this.y + j) != TERRAIN_MASK_WALL) {
+                    ++harvestSlots;
+                }
+            }
+        }
+        return harvestSlots;
+    };
+
     RoomPosition.prototype.isNearMiner = function() {
         return this.findInRange(FIND_MY_CREEPS, 1, {
             filter: creep => creep.memory.role === 'miner' && creep.ticksToLive > CREEP_LIFE_TIME / 10
@@ -7,7 +20,7 @@ module.exports = function() {
     };
 
     RoomPosition.prototype.isNearSource = function() {
-        return this.findInRange(FIND_SOURCES, 1).length > 0;
+        return this.findInRange(FIND_SOURCES, 1).length > 0 || this.findInRange(FIND_MINERALS, 1).length > 0;
     };
 
     RoomPosition.prototype.findFleeMovement = function(targetPos) {
@@ -40,8 +53,14 @@ module.exports = function() {
     RoomPosition.prototype.findDeposit = function() {
         return this.findClosestByRange(FIND_STRUCTURES, {
             filter: (structure) => (structure.structureType === STRUCTURE_CONTAINER ||
-                    structure.structureType == STRUCTURE_STORAGE) && structure.store[RESOURCE_ENERGY] < structure.storeCapacity / 2 &&
+                    structure.structureType == STRUCTURE_STORAGE) && _.sum(structure.store) < structure.storeCapacity / 2 &&
                 !structure.pos.isNearSource()
+        });
+    };
+
+    RoomPosition.prototype.findStorage = function() {
+        return this.findClosestByRange(FIND_STRUCTURES, {
+            filter: (structure) => structure.structureType == STRUCTURE_STORAGE && _.sum(structure.store) < structure.storeCapacity
         });
     };
 

@@ -1,11 +1,11 @@
 module.exports = function() {
 
-    if (this.memory.active && this.carry[RESOURCE_ENERGY] === this.carryCapacity) {
+    if (this.memory.active && _.sum(this.carry) === this.carryCapacity) {
         this.memory.targetId = null
         this.memory.active = false;
     }
 
-    if (!this.memory.active && this.carry[RESOURCE_ENERGY] === 0) {
+    if (!this.memory.active && _.sum(this.carry) === 0) {
         this.memory.active = true;
     }
 
@@ -26,31 +26,38 @@ module.exports = function() {
             this.moveTo(Game.getObjectById(this.memory.spawnId));
         }
     } else {
-        if(this.room.name === Game.getObjectById(this.memory.spawnId).room.name) {
-            const tower = this.pos.findClosestTower();
-            if (tower && this.room.memory.shouldRefill) {
-                if (this.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    this.moveTo(tower);
+        if (this.room.name === Game.getObjectById(this.memory.spawnId).room.name) {
+            if (_.sum(this.carry) > 0 && _.sum(this.carry) !== this.carry[RESOURCE_ENERGY]) {
+                const container = this.pos.findStorage();
+                if (this.transferMineral(container) === ERR_NOT_IN_RANGE) {
+                    this.moveTo(container);
                 }
             } else {
-                let spawn = this.pos.findClosestSpawnOrExtension();
-    
-                if (!spawn) {
-                    spawn = this.pos.findClosestByRange(FIND_MY_SPAWNS);
-                }
-    
-                if (spawn) {
-                    const container = this.pos.findDeposit();
-                    if (container && this.room.memory.shouldStore) {
-                        if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                            this.moveTo(container);
-                        }
-                    } else {
-                        const transferResult = this.transfer(spawn, RESOURCE_ENERGY);
-                        if (transferResult === ERR_NOT_IN_RANGE) {
-                            this.moveTo(spawn);
-                        } else if (transferResult === ERR_FULL) {
-                            this.moveTo(this.pos.findFleeMovement(spawn.pos));
+                const tower = this.pos.findClosestTower();
+                if (tower && this.room.memory.shouldRefill) {
+                    if (this.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        this.moveTo(tower);
+                    }
+                } else {
+                    let spawn = this.pos.findClosestSpawnOrExtension();
+
+                    if (!spawn) {
+                        spawn = this.pos.findClosestByRange(FIND_MY_SPAWNS);
+                    }
+
+                    if (spawn) {
+                        const container = this.pos.findDeposit();
+                        if (container && this.room.memory.shouldStore) {
+                            if (this.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                                this.moveTo(container);
+                            }
+                        } else {
+                            const transferResult = this.transfer(spawn, RESOURCE_ENERGY);
+                            if (transferResult === ERR_NOT_IN_RANGE) {
+                                this.moveTo(spawn);
+                            } else if (transferResult === ERR_FULL) {
+                                this.moveTo(this.pos.findFleeMovement(spawn.pos));
+                            }
                         }
                     }
                 }

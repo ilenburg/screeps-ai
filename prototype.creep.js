@@ -1,4 +1,20 @@
 module.exports = function() {
+    
+    function getResource(containerStore) {
+        for (let resource in containerStore) {
+            if (containerStore.hasOwnProperty(resource) && containerStore[resource] > 0) {
+                return resource;
+            }
+        }
+    }
+    
+    function getMineral(containerStore) {
+        for (let resource in containerStore) {
+            if (containerStore.hasOwnProperty(resource) && resource !== RESOURCE_ENERGY) {
+                return resource;
+            }
+        }
+    }
 
     function randomDirection() {
         return Math.floor((Math.random() * 8) + 1);
@@ -15,6 +31,10 @@ module.exports = function() {
         samurai: require('role.samurai'),
         lord: require('role.lord'),
         merchant: require('role.merchant')
+    };
+    
+    Creep.prototype.transferMineral = function(target) {
+        return this.transfer(target, getMineral(this.carry));
     };
 
     Creep.prototype.seekAndAttack = function(target) {
@@ -33,8 +53,8 @@ module.exports = function() {
                     this.memory.targetId = null;
                 }
             } else {
-                actionResult = this.withdraw(target, RESOURCE_ENERGY);
-                if (target.store[RESOURCE_ENERGY] < 50) {
+                actionResult = this.withdraw(target, getResource(target.store));
+                if (_.sum(target.store) < 50) {
                     this.memory.targetId = null;
                 }
             }

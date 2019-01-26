@@ -1,7 +1,6 @@
 require('prototype.room.position')();
 require('prototype.spawn')();
 require('prototype.creep')();
-require('prototype.source')();
 require('prototype.tower')();
 require('prototype.room')();
 
