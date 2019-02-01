@@ -23,6 +23,16 @@ module.exports = function() {
         return this.findInRange(FIND_SOURCES, 1).length > 0 || this.findInRange(FIND_MINERALS, 1).length > 0;
     };
 
+    RoomPosition.prototype.getLinkNearby = function() {
+        const links = this.findInRange(FIND_STRUCTURES, 1, {
+            filter: structure => structure.structureType === STRUCTURE_LINK
+        });
+        if (links.length > 0) {
+            return links[0];
+        }
+        return null;
+    };
+
     RoomPosition.prototype.findFleeMovement = function(targetPos) {
         return PathFinder.search(this, {
             pos: targetPos,
@@ -34,7 +44,7 @@ module.exports = function() {
 
     RoomPosition.prototype.findTomb = function() {
         return this.findClosestByRange(FIND_TOMBSTONES, {
-            filter: tomb => tomb.store[RESOURCE_ENERGY] > 0
+            filter: tomb => _.sum(tomb.store) > 0 && tomb.creep.my
         });
     };
 
@@ -95,6 +105,16 @@ module.exports = function() {
         });
         if (containers.length > 0) {
             return containers[0];
+        }
+        return null;
+    };
+
+    RoomPosition.prototype.findLinkNearby = function() {
+        const links = this.findInRange(FIND_STRUCTURES, 1, {
+            filter: (structure) => structure.structureType === STRUCTURE_LINK
+        });
+        if (links.length > 0) {
+            return links[0];
         }
         return null;
     };

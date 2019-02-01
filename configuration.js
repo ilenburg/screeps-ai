@@ -10,13 +10,13 @@ module.exports = function(spawnName) {
             numberBuilder: 2,
             numberSamurai: 0,
             numberLord: 1,
-            numberMerchant: 1,
+            numberMerchant: 0,
             minerToCarrierRatio: 0.15,
             minerToConsumerRatio: 0.25,
             attackFlagName: 'Target',
             merchantFlagName: 'Source',
-            merchantStorageId: '5c3ec5abca6284463c4fcf44',
-            longRangeBuildTargetId: '5c4c55fa7b6c6319318ca737'
+            merchantStorageId: null,
+            longRangeBuildTargetId: null
         },
         Spawn2: {
             numberBuilder: 8,
@@ -24,6 +24,13 @@ module.exports = function(spawnName) {
             minerToCarrierRatio: 0.3,
             minerToConsumerRatio: 0.1,
             numberRepair: 0
+        },
+        Spawn3: {
+            numberBuilder: 3,
+            numberMerchant: 0,
+            minerToCarrierRatio: 1,
+            minerToConsumerRatio: 0.2,
+            numberRepair: 1
         }
     };
 

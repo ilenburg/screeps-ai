@@ -14,11 +14,28 @@ module.exports = function() {
         filter: structure => structure.structureType === STRUCTURE_EXTRACTOR
     };
 
+    function filterCreepMiner(creep) {
+        return creep.memory.role === 'miner' || creep.memory.role === 'linkMiner'
+    }
+
+    function filterWithRemainingMinerals(mineral) {
+        return mineral.mineralAmount > 0;
+    }
+
     function RoleMemory(role, targetId, spawnId) {
         this.memory = {
             role: role,
             targetId: targetId,
             spawnId: spawnId
+        };
+    }
+
+    function LinkMinerRoleMemory(targetId, spawnId, targetLinkId) {
+        this.memory = {
+            role: 'linkMiner',
+            targetId: targetId,
+            spawnId: spawnId,
+            targetLinkId: targetLinkId
         };
     }
 
@@ -230,6 +247,15 @@ module.exports = function() {
         return ERR_INVALID_TARGET;
     };
 
+    StructureSpawn.prototype.spawnLinkMiner = function(target, link) {
+        if (target) {
+            const creepBody = [CARRY, CARRY, MOVE];
+            fillMiner(creepBody, this.room.energyAvailable);
+            return this.spawnCreep(creepBody, 'LinkMiner-' + Game.time, new LinkMinerRoleMemory(target.id, this.id, link.id));
+        }
+        return ERR_INVALID_TARGET;
+    };
+
     StructureSpawn.prototype.spawnHarvester = function(source) {
         if (source) {
             const creepBody = [WORK, MOVE, CARRY];
@@ -244,7 +270,6 @@ module.exports = function() {
         const creepBody = [WORK, MOVE, CARRY];
         balacedFillWithParts(creepBody, this.room.energyAvailable);
         return this.spawnCreep(creepBody, 'Merchant-' + Game.time, new MerchantRoleMemory(configuration.merchantFlagName, configuration.merchantStorageId, this.id));
-
     };
 
     StructureSpawn.prototype.spawnUpgrader = function() {
@@ -280,15 +305,16 @@ module.exports = function() {
     };
 
     StructureSpawn.prototype.produce = function() {
-        if (!this.spawning && this.room.energyCapacityAvailable >= SPAWN_ENERGY_CAPACITY) {
+        if (!this.spawning) {
             const room = this.room;
             const configuration = configure(this.name);
             const roomCreeps = _(Game.creeps).filter(roomCreepFilter(this.id)).values();
             const source = filterAvailableTarget(roomCreeps, room.find(FIND_SOURCES));
-            const extractor = room.find(FIND_STRUCTURES, filterExtractor).length > 0 ? filterAvailableTarget(roomCreeps, room.find(FIND_MINERALS)) : null;
+            const extractor = room.find(FIND_STRUCTURES, filterExtractor).length > 0 ? filterAvailableTarget(roomCreeps,
+                _.filter(room.find(FIND_MINERALS), filterWithRemainingMinerals)) : null;
             const attackFlag = Game.flags[configuration.attackFlagName];
             const amount = {
-                miner: _(roomCreeps).filter(creepFilter('miner')).size(),
+                miner: _(roomCreeps).filter(filterCreepMiner).size(),
                 carrier: _(roomCreeps).filter(creepFilter('carrier')).size(),
                 upgrader: _(roomCreeps).filter(creepFilter('upgrader')).size(),
                 harvester: _(roomCreeps).filter(creepFilter('harvester')).size(),
@@ -299,11 +325,13 @@ module.exports = function() {
                 lord: _(roomCreeps).filter(creepFilter('lord')).size()
             };
 
+
             const parts = {
-                miner: _(roomCreeps).filter(creepFilter('miner')).reduce(reduceWorkBody, 0),
+                miner: _(roomCreeps).filter(filterCreepMiner).reduce(reduceWorkBody, 0),
                 carrier: _(roomCreeps).filter(creepFilter('carrier')).reduce(reduceCreep, 0),
                 consumer: _(roomCreeps).filter(consumerFilter()).reduce(reduceCreep, 0)
             };
+
 
             if (room.energyAvailable < room.energyCapacityAvailable &&
                 (source || extractor || parts.miner / parts.carrier > configuration.minerToCarrierRatio || amount.merchant < configuration.numberMerchant)) {
@@ -334,7 +362,13 @@ module.exports = function() {
                 } else if (parts.miner / parts.carrier > configuration.minerToCarrierRatio) {
                     this.spawnCarrier();
                 } else if (source) {
-                    this.spawnMiner(source);
+                    const nearbyLink = source.pos.getLinkNearby();
+                    console.log(nearbyLink);
+                    if (nearbyLink) {
+                        this.spawnLinkMiner(source, nearbyLink);
+                    } else {
+                        this.spawnMiner(source);
+                    }
                 } else if (extractor) {
                     const minerals = room.find(FIND_MINERALS);
                     if (minerals.length > 0) {
@@ -349,7 +383,8 @@ module.exports = function() {
                 } else if (parts.miner / parts.consumer > configuration.minerToConsumerRatio) {
                     if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
                         this.spawnRepair();
-                    } else if (amount.builder < configuration.numberBuilder && (room.find(FIND_CONSTRUCTION_SITES).length > 0 || configuration.longRangeBuildTargetId)) {
+                    } else if (amount.builder < configuration.numberBuilder && (room.find(FIND_CONSTRUCTION_SITES).length > 0 ||
+                            (configuration.longRangeBuildTargetId && Game.getObjectById(configuration.longRangeBuildTargetId)))) {
                         this.spawnBuilder();
                     } else {
                         this.spawnUpgrader();

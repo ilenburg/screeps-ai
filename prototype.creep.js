@@ -1,5 +1,5 @@
 module.exports = function() {
-    
+
     function getResource(containerStore) {
         for (let resource in containerStore) {
             if (containerStore.hasOwnProperty(resource) && containerStore[resource] > 0) {
@@ -7,7 +7,7 @@ module.exports = function() {
             }
         }
     }
-    
+
     function getMineral(containerStore) {
         for (let resource in containerStore) {
             if (containerStore.hasOwnProperty(resource) && resource !== RESOURCE_ENERGY) {
@@ -30,9 +30,10 @@ module.exports = function() {
         repair: require('role.repair'),
         samurai: require('role.samurai'),
         lord: require('role.lord'),
-        merchant: require('role.merchant')
+        merchant: require('role.merchant'),
+        linkMiner: require('role.miner.link')
     };
-    
+
     Creep.prototype.transferMineral = function(target) {
         return this.transfer(target, getMineral(this.carry));
     };
