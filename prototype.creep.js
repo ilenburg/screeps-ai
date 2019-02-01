@@ -53,6 +53,8 @@ module.exports = function() {
                 if (target.amount < 50) {
                     this.memory.targetId = null;
                 }
+            } else if (target instanceof StructureLink) {
+                actionResult = this.withdraw(target, RESOURCE_ENERGY);
             } else {
                 actionResult = this.withdraw(target, getResource(target.store));
                 if (_.sum(target.store) < 50) {

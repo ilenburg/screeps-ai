@@ -211,7 +211,7 @@ module.exports = function() {
 
     function filterAvailableTarget(roomCreeps, targets) {
         for (let i = 0; i < targets.length; i++) {
-            const sourceCreeps = _(roomCreeps).filter(creepFilter('miner')).filter(targetFilter(targets[i].id)).value();
+            const sourceCreeps = _(roomCreeps).filter(filterCreepMiner).filter(targetFilter(targets[i].id)).value();
             if ((targets[i].pos.getHarvestSlots() > sourceCreeps.length && sourceCreeps.reduce(reduceWorkBody, 0) < 5) ||
                 (sourceCreeps.length === 1 && sourceCreeps[0].ticksToLive < CREEP_LIFE_TIME / 10)) {
                 return targets[i];
@@ -363,7 +363,6 @@ module.exports = function() {
                     this.spawnCarrier();
                 } else if (source) {
                     const nearbyLink = source.pos.getLinkNearby();
-                    console.log(nearbyLink);
                     if (nearbyLink) {
                         this.spawnLinkMiner(source, nearbyLink);
                     } else {

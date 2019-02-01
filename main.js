@@ -3,6 +3,7 @@ require('prototype.spawn')();
 require('prototype.creep')();
 require('prototype.tower')();
 require('prototype.room')();
+require('prototype.link')();
 
 module.exports.loop = function() {
 
@@ -18,7 +19,7 @@ module.exports.loop = function() {
         Game.creeps[name].executeRole();
     }
 
-    roomSet.forEach(room => room.defend());
+    roomSet.forEach(room => room.manage());
 
     for (let name in Memory.creeps) {
         if (!Game.creeps[name]) {

@@ -44,7 +44,7 @@ module.exports = function() {
 
     RoomPosition.prototype.findTomb = function() {
         return this.findClosestByRange(FIND_TOMBSTONES, {
-            filter: tomb => _.sum(tomb.store) > 0 && tomb.creep.my
+            filter: tomb => _.sum(tomb.store) > 0
         });
     };
 
