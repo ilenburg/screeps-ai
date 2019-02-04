@@ -11,7 +11,7 @@ module.exports = function(spawnName) {
             numberSamurai: 0,
             numberLord: 1,
             numberMerchant: 0,
-            minerToCarrierRatio: 0.25,
+            minerToCarrierRatio: 0.3,
             minerToConsumerRatio: 0.25,
             attackFlagName: 'Target',
             merchantFlagName: 'Source',

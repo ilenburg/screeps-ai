@@ -18,6 +18,10 @@ module.exports = function() {
         return creep.memory.role === 'miner' || creep.memory.role === 'linkMiner'
     }
 
+    function filterCreepMineralMiner(creep) {
+        return (creep.memory.role === 'miner' || creep.memory.role === 'linkMiner') && Game.getObjectById(creep.memory.targetId) instanceof Mineral
+    }
+
     function filterWithRemainingMinerals(mineral) {
         return mineral.mineralAmount > 0;
     }
@@ -239,6 +243,15 @@ module.exports = function() {
     };
 
     StructureSpawn.prototype.spawnMiner = function(target) {
+        const nearbyLink = target.pos.getLinkNearby();
+        if (nearbyLink) {
+            this.spawnLinkMiner(target, nearbyLink);
+        } else {
+            this.spawnRegularMiner(target);
+        }
+    };
+
+    StructureSpawn.prototype.spawnRegularMiner = function(target) {
         if (target) {
             const creepBody = [WORK, WORK, MOVE];
             fillMiner(creepBody, this.room.energyAvailable);
@@ -313,6 +326,7 @@ module.exports = function() {
             const extractor = room.find(FIND_STRUCTURES, filterExtractor).length > 0 ? filterAvailableTarget(roomCreeps,
                 _.filter(room.find(FIND_MINERALS), filterWithRemainingMinerals)) : null;
             const attackFlag = Game.flags[configuration.attackFlagName];
+
             const amount = {
                 miner: _(roomCreeps).filter(filterCreepMiner).size(),
                 carrier: _(roomCreeps).filter(creepFilter('carrier')).size(),
@@ -325,13 +339,11 @@ module.exports = function() {
                 lord: _(roomCreeps).filter(creepFilter('lord')).size()
             };
 
-
             const parts = {
                 miner: _(roomCreeps).filter(filterCreepMiner).reduce(reduceWorkBody, 0),
                 carrier: _(roomCreeps).filter(creepFilter('carrier')).reduce(reduceCreep, 0),
                 consumer: _(roomCreeps).filter(consumerFilter()).reduce(reduceCreep, 0)
             };
-
 
             if (room.energyAvailable < room.energyCapacityAvailable &&
                 (source || extractor || parts.miner / parts.carrier > configuration.minerToCarrierRatio || amount.merchant < configuration.numberMerchant)) {
@@ -340,8 +352,14 @@ module.exports = function() {
                 room.memory.shouldRefill = true;
             }
 
-            if ((this.energy === this.energyCapacity || room.energyCapacityAvailable >= SPAWN_ENERGY_CAPACITY) && amount.miner < 1 && amount.harvester < 1) {
-                this.spawnHarvester(source);
+            if ((this.energy === this.energyCapacity || room.energyCapacityAvailable >= SPAWN_ENERGY_CAPACITY)) {
+                if (amount.miner < 1 && amount.harvester < 1 && amount.carrier < 1) {
+                    this.spawnHarvester(source);
+                } else if (amount.carrier < 1 && amount.miner > 0) {
+                    this.spawnCarrier();
+                } else if (amount.carrier > 0 && (amount.miner < 1 || amount.miner === _(roomCreeps).filter(filterCreepMineralMiner).size()) && source) {
+                    this.spawnMiner(source);
+                }
             }
 
             if (room.energyAvailable < room.energyCapacityAvailable && (!room.memory.shouldRefill || parts.miner / parts.consumer > configuration.minerToConsumerRatio)) {
@@ -363,11 +381,7 @@ module.exports = function() {
                     this.spawnCarrier();
                 } else if (source) {
                     const nearbyLink = source.pos.getLinkNearby();
-                    if (nearbyLink) {
-                        this.spawnLinkMiner(source, nearbyLink);
-                    } else {
-                        this.spawnMiner(source);
-                    }
+                    this.spawnMiner(source);
                 } else if (extractor) {
                     const minerals = room.find(FIND_MINERALS);
                     if (minerals.length > 0) {
