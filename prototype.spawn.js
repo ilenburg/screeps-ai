@@ -189,7 +189,7 @@ module.exports = function() {
         while (cost < energyAvailable) {
             let fit = false;
             bodyParts.forEach(bodyPart => {
-                if (cost + BODYPART_COST[bodyPart] <= energyAvailable) {
+                if (cost + BODYPART_COST[bodyPart] <= energyAvailable && body.length < 50) {
                     body.push(bodyPart);
                     cost += BODYPART_COST[bodyPart];
                     fit = true;
@@ -362,7 +362,9 @@ module.exports = function() {
                 }
             }
 
-            if (room.energyAvailable < room.energyCapacityAvailable && (!room.memory.shouldRefill || parts.miner / parts.consumer > configuration.minerToConsumerRatio)) {
+            if (room.energyAvailable < room.energyCapacityAvailable && (!room.memory.shouldRefill ||
+                    parts.miner / parts.consumer > configuration.minerToConsumerRatio ||
+                    amount.upgrader < 1 || (amount.builder < 1 && room.find(FIND_CONSTRUCTION_SITES).length > 0))) {
                 room.memory.shouldStore = false;
             } else {
                 room.memory.shouldStore = true;
@@ -380,7 +382,6 @@ module.exports = function() {
                 } else if (parts.miner / parts.carrier > configuration.minerToCarrierRatio) {
                     this.spawnCarrier();
                 } else if (source) {
-                    const nearbyLink = source.pos.getLinkNearby();
                     this.spawnMiner(source);
                 } else if (extractor) {
                     const minerals = room.find(FIND_MINERALS);
@@ -393,7 +394,8 @@ module.exports = function() {
                     this.spawnSamurai(attackFlag);
                 } else if (attackFlag && amount.lord < configuration.numberLord) {
                     this.spawnLord(attackFlag);
-                } else if (parts.miner / parts.consumer > configuration.minerToConsumerRatio) {
+                } else if (parts.miner / parts.consumer > configuration.minerToConsumerRatio ||
+                    (room.storage && room.storage.store[RESOURCE_ENERGY] > room.energyCapacityAvailable)) {
                     if (amount.repairer < configuration.numberRepair && room.find(FIND_STRUCTURES, filterDamaged).length > 0) {
                         this.spawnRepair();
                     } else if (amount.builder < configuration.numberBuilder && (room.find(FIND_CONSTRUCTION_SITES).length > 0 ||

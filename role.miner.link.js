@@ -17,7 +17,7 @@ module.exports = function() {
                     const nearbyContainer = target.pos.findContainerNearby();
                     if (nearbyContainer && !nearbyContainer.pos.isNearMiner()) {
                         this.memory.targetContainerId = nearbyContainer.id;
-                        this.moveTo(nearbyLink);
+                        this.moveTo(nearbyContainer);
                     } else {
                         this.moveTo(target);
                     }

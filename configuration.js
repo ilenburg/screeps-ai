@@ -19,18 +19,15 @@ module.exports = function(spawnName) {
             longRangeBuildTargetId: null
         },
         Spawn2: {
-            numberBuilder: 8,
-            numberMerchant: 0,
+            numberBuilder: 2,
             minerToCarrierRatio: 0.3,
-            minerToConsumerRatio: 0.1,
-            numberRepair: 0
+            minerToConsumerRatio: 0.1
         },
         Spawn3: {
-            numberBuilder: 3,
-            numberMerchant: 0,
+            numberBuilder: 4,
+            numberMerchant: 2,
             minerToCarrierRatio: 1,
-            minerToConsumerRatio: 0.2,
-            numberRepair: 1
+            minerToConsumerRatio: 0.2
         }
     };
 

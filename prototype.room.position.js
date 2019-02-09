@@ -63,7 +63,7 @@ module.exports = function() {
     RoomPosition.prototype.findDeposit = function() {
         return this.findClosestByRange(FIND_STRUCTURES, {
             filter: (structure) => (structure.structureType === STRUCTURE_CONTAINER ||
-                    structure.structureType == STRUCTURE_STORAGE) && _.sum(structure.store) < structure.storeCapacity / 2 &&
+                    structure.structureType == STRUCTURE_STORAGE) && _.sum(structure.store) < structure.storeCapacity &&
                 !structure.pos.isNearSource()
         });
     };
